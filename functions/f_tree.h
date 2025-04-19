@@ -12,9 +12,9 @@ typedef struct TreeNode {
 
 // Arbre syntaxique
 typedef struct SyntaxTree {
-  TreeNode *root;                 // Pointeur vers la racine de l'arbre
-  TreeNode *leaves;               // Tableau de pointeurs vers les feuilles (ordonnées).
   int num_leaves;                 // Nombre de feuilles dans l'arbre
+  TreeNode *root;                 // Pointeur vers la racine de l'arbre
+  TreeNode **leaves;              // Tableau de pointeurs vers les feuilles (ordonnées).
 } SyntaxTree;
 
 // Fonctions

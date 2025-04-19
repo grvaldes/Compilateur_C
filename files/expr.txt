@@ -1,7 +1,8 @@
-a*
-ab
-(c|b)
+(b)(c)
+(c|b)*
 ab(ac|b)*cb
-ab(ac|b)cb
+a*
 a(a|b)*
+ab
+ab(ac|b)cb
 ab(cc)*bd
