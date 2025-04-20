@@ -42,11 +42,11 @@ void add_transition_to_state(NFATransition* transition, NFAState* state);
 void add_transition_to_nfa(NFA* nfa, NFATransition* transition, int counter);
 void add_state_to_nfa(NFA* nfa, NFAState* state, int position, int counter);
 
-void export_nfa_graph(NFA *nfa, char *filename);
-void display_nfa(NFA *nfa);
-
 void print_state(NFAState *state);
 void print_transition(NFATransition *transition);
 void print_nfa(NFA *nfa);
+
+void export_nfa_to_graphviz(const char *filename, NFA *nfa);
+void display_nfa(NFA *nfa);
 
 #endif

@@ -39,13 +39,15 @@ int main(int argc, char *argv[]) {
 
   // Création de l'arbre syntaxique
   SyntaxTree *tree = create_syntax_tree(expression);
+  export_tree_to_graphviz("files/tree.dot", tree);
 
   // Création de l'automate non déterministe
   NFA *nfa = create_nfa_from_syntax_tree(tree);
+  export_nfa_to_graphviz("files/nfa.dot", nfa);
 
   // Fermeture du fichier et libération de la mémoire
-  free(tree->leaves);
-  free(tree);
+  // free(tree->leaves);
+  // free(tree);
   fclose(file);
 
   return 0;

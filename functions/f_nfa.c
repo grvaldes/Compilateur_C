@@ -33,8 +33,8 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
   // On modifie l'automate a avec chaque feuille de l'arbre syntaxique.
   for (int i = 0; i < tree->num_leaves; i++) {
-    printf("Leaf %d: %c\n", i, tree->leaves[i].value);
-    switch (tree->leaves[i].value) {
+    printf("Leaf %d: %c\n", i, tree->leaves[i]->value);
+    switch (tree->leaves[i]->value) {
       case '.':
         {
           // Créer un NFA pour l'opération de concaténation
@@ -166,7 +166,7 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           // On initialise les états et la transition.
           initialize_state(state0, index++, IS_START, NOT_FINAL);
           initialize_state(state1, index++, NOT_START, IS_FINAL);
-          initialize_transition(transition0, state0, state1, tree->leaves[i].value);
+          initialize_transition(transition0, state0, state1, tree->leaves[i]->value);
 
           // On pointe les transitions dans les états.
           add_transition_to_state(transition0, state0);
@@ -216,7 +216,7 @@ void initialize_nfa(NFA *return_nfa, SyntaxTree *tree) {
   return_nfa->num_transitions = 0;
 
   for (int i = 0; i < tree->num_leaves; i++) {
-    switch (tree->leaves[i].value) {
+    switch (tree->leaves[i]->value) {
       case '|':
         return_nfa->num_states = return_nfa->num_states + 2;
         return_nfa->num_transitions = return_nfa->num_transitions + 4;
@@ -316,4 +316,43 @@ void print_nfa(NFA *nfa) {
   }
 
   printf("\n");
+}
+
+
+void export_nfa_to_graphviz(const char* filename, NFA* nfa) {
+    FILE* f = fopen(filename, "w");
+    if (!f) {
+        perror("Erreur d'ouverture de fichier.");
+        return;
+    }
+
+    fprintf(f, "digraph NFA {\n");
+    fprintf(f, "  rankdir=LR;\n");
+    fprintf(f, "  node [shape=circle];\n");
+
+    for (int i = 0; i < nfa->num_states; ++i) {
+        NFAState* state = nfa->states[i];
+        if (state->is_final)
+            fprintf(f, "  q%d [shape=doublecircle];\n", state->index);
+        else
+            fprintf(f, "  q%d;\n", state->index);
+    }
+
+    for (int i = 0; i < nfa->num_states; ++i) {
+        NFAState* state = nfa->states[i];
+        if (state->is_start) {
+            fprintf(f, "  start_q%d [shape=point];\n", state->index);
+            fprintf(f, "  start_q%d -> q%d;\n", state->index, state->index);
+        }
+    }
+
+    for (int i = 0; i < nfa->num_transitions; ++i) {
+        NFATransition* t = nfa->transitions[i];
+        char label = t->symbol;
+        if (label == '\0') label = 'E';
+        fprintf(f, "  q%d -> q%d [label=\"%c\"];\n", t->from->index, t->to->index, label);
+    }
+
+    fprintf(f, "}\n");
+    fclose(f);
 }

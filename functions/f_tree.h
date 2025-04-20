@@ -1,6 +1,8 @@
 #ifndef F_TREE_H
 #define F_TREE_H
 
+#include <stdio.h>
+
 // Noeud de l'arbre syntaxique
 typedef struct TreeNode {
   char value;                     // Caractère de l'arbre
@@ -20,6 +22,11 @@ typedef struct SyntaxTree {
 // Fonctions
 int verify_syntax_tree(char *expression);
 SyntaxTree *create_syntax_tree(char *expression);
-void export_tree_graph(SyntaxTree *tree, char *filename);
+
+void initialize_leaf(TreeNode *leaf, char value, int index);
+void display_tree(SyntaxTree *tree);
+
+void export_node(FILE *f, TreeNode *node);
+void export_tree_to_graphviz(const char *filename, SyntaxTree *tree);
 
 #endif

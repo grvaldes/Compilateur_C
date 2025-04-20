@@ -11,7 +11,8 @@
     "tuple": "c",
     "vector": "c",
     "__locale": "cpp",
-    "locale": "cpp"
+    "locale": "cpp",
+    "stdio.h": "c"
   },
   "cSpell.words": [
     "Kleene",

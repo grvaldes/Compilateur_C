@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -21,6 +20,9 @@ int verify_syntax_tree(char *expression) {
     case '*':
       fprintf(stderr, "Erreur : expression incorrecte.\n");
       abort();
+    case '.':
+      fprintf(stderr, "Erreur : caractère interdit.\n");
+      abort();
     case '(':
       parenthesis++;
       operation++;
@@ -32,7 +34,7 @@ int verify_syntax_tree(char *expression) {
 
   for (int i = 1; i < strlen(expression); i++) {
     char *curr_char = &expression[i];
-    char *prev_char = &expression[i - 1];
+    char *prev_char = &expression[i-1];
 
     switch (*curr_char) {
     case '(':
@@ -68,6 +70,9 @@ int verify_syntax_tree(char *expression) {
         abort();
       }
       break;
+    case '.':
+      fprintf(stderr, "Erreur : caractère interdit (.).\n");
+      abort();
     default:
       letter++;
 
@@ -93,6 +98,7 @@ int verify_syntax_tree(char *expression) {
 // des noeuds.
 SyntaxTree *create_syntax_tree(char *expression) {
   // On vérifie la syntaxe de l'expression et on compte le nombre de noeuds.
+  int fail = 1;
   int nodes = verify_syntax_tree(expression);
   
   // On alloue la mémoire pour l'arbre syntaxique
@@ -102,188 +108,152 @@ SyntaxTree *create_syntax_tree(char *expression) {
   tree->num_leaves = nodes;
 
   // On alloue la mémoire pour les noeuds de l'arbre et un stack auxiliaire
-  TreeNode *leaves = malloc(sizeof(TreeNode) * nodes);
-  TreeNode *aux_operator = malloc(sizeof(TreeNode) * nodes);
+  TreeNode **leaves = malloc(sizeof(TreeNode*) * nodes);
+  TreeNode **aux_operator = malloc(sizeof(TreeNode*) * nodes);
 
   int leaf_index = -1;              // Index pour le tableau de noeuds
   int operator_index = -1;          // Index pour le tableau d'opérateurs
 
-  // On initialise le tableau de noeuds. Si l'expression commence par une parenthèse,
-  // on l'ajoute au tableau d'opérateurs. Sinon, on l'ajoute au tableau de noeuds.
-  // L'indice est -1 quand on ne sait pas où le placer dans l'arbre.
-  // Les parents et enfants sont encore pas connus.
-  switch(expression[0]) {
-    case '(':
-      operator_index++;
-      aux_operator[operator_index].value = ')';
-      aux_operator[operator_index].index = -1;
-      aux_operator[operator_index].parent = NULL;
-      aux_operator[operator_index].left_child = NULL;
-      aux_operator[operator_index].right_child = NULL;
-      break;
-    default:
-      leaf_index++;
-      leaves[leaf_index].value = expression[0];
-      leaves[leaf_index].index = leaf_index;
-      leaves[leaf_index].parent = NULL;
-      leaves[leaf_index].left_child = NULL;
-      leaves[leaf_index].right_child = NULL;
-      break;
+  if (expression[0] == '(') {
+    operator_index++;
+    aux_operator[operator_index] = malloc(sizeof(TreeNode));
+    initialize_leaf(aux_operator[operator_index], ')', -1);
+  } else {
+    leaf_index++;
+    leaves[leaf_index] = malloc(sizeof(TreeNode));
+    initialize_leaf(leaves[leaf_index], expression[0], leaf_index);
   }
-  
-  // On parcourt l'expression régulière caractère par caractère
-  // et on crée les noeuds de l'arbre syntaxique.
+
   for (int i = 1; i < strlen(expression); i++) {
     char *curr_char = &expression[i];       // Caractère courant
     char *prev_char = &expression[i-1];     // Caractère précédent
 
     switch (*curr_char) {
-      // Si le caractère courant est une parenthèse ouvrante, on l'ajoute au tableau
-      // d'opérateurs. Si le caractère précédent n'est pas un opérateur, on ajoute
-      // un opérateur de concaténation '.' au tableau de noeuds.
       case '(':
         if (*prev_char != '|' && *prev_char != '(') {
           operator_index++;
-          aux_operator[operator_index].value = '.';
-          aux_operator[operator_index].index = -1;
-          aux_operator[operator_index].parent = NULL;
-          aux_operator[operator_index].left_child = NULL;
-          aux_operator[operator_index].right_child = NULL;
-        }
-        
-        operator_index++;
-        aux_operator[operator_index].value = ')';
-        aux_operator[operator_index].index = -1;
-        aux_operator[operator_index].parent = NULL;
-        aux_operator[operator_index].left_child = NULL;
-        aux_operator[operator_index].right_child = NULL;
-        break;
-      // Si le caractère courant est une parenthèse fermante, on dépile les opérateurs
-      // jusqu'à ce qu'on trouve une parenthèse ouvrante.
-      case ')':
-        while(aux_operator[operator_index].value != ')') {
-          leaf_index++;
-          if (aux_operator[operator_index].value == '|') {
-            leaves[leaf_index] = aux_operator[operator_index];
-            leaves[leaf_index].index = leaf_index;
-            leaves[leaf_index].left_child = &leaves[leaf_index-2]; 
-            leaves[leaf_index].right_child = &leaves[leaf_index-1];
-            leaves[leaf_index-2].parent = &leaves[leaf_index];
-            leaves[leaf_index-1].parent = &leaves[leaf_index];
-          }   
-          operator_index--;
+          aux_operator[operator_index] = malloc(sizeof(TreeNode));
+          initialize_leaf(aux_operator[operator_index], '.', -1);
         } 
-        leaf_index++;
-        leaves[leaf_index] = aux_operator[operator_index];
-        leaves[leaf_index].index = leaf_index;
-        leaves[leaf_index].left_child = &leaves[leaf_index-1];
-        leaves[leaf_index-1].parent = &leaves[leaf_index];
-        operator_index--;
+        operator_index++;
+        aux_operator[operator_index] = malloc(sizeof(TreeNode));
+        initialize_leaf(aux_operator[operator_index], ')', -1);
         break;
-      // Si le caractère courant est un conjonction, on l'ajoute au tableau d'opérateurs.
+      case ')':
+        while(aux_operator[operator_index] && aux_operator[operator_index]->value != ')') {
+          if (aux_operator[operator_index] && aux_operator[operator_index]->value == '|') {
+            leaf_index++;
+            leaves[leaf_index] = malloc(sizeof(TreeNode));
+            initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
+            leaves[leaf_index]->left_child = leaves[leaf_index-2]; 
+            leaves[leaf_index]->right_child = leaves[leaf_index-1];
+            leaves[leaf_index-2]->parent = leaves[leaf_index];
+            leaves[leaf_index-1]->parent = leaves[leaf_index];
+
+            free(aux_operator[operator_index]);
+            aux_operator[operator_index] = NULL;
+            operator_index--;
+          }
+        } 
+
+        // On arrive à l'ouverture du parenthèse et on l'ajoute à l'arbre
+        leaf_index++;
+        leaves[leaf_index] = malloc(sizeof(TreeNode));
+        initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
+        leaves[leaf_index]->left_child = leaves[leaf_index-1];
+        leaves[leaf_index-1]->parent = leaves[leaf_index];
+
+        free(aux_operator[operator_index]);
+        aux_operator[operator_index] = NULL;
+        operator_index--;
+        
+        break;
       case '|':
         operator_index++;
-        aux_operator[operator_index].value = *curr_char;
-        aux_operator[operator_index].index = -1;
-        aux_operator[operator_index].parent = NULL;
-        aux_operator[operator_index].left_child = NULL;
-        aux_operator[operator_index].right_child = NULL;
+        aux_operator[operator_index] = malloc(sizeof(TreeNode));
+        initialize_leaf(aux_operator[operator_index], *curr_char, -1);
         break;
-      // Si le caractère courant est une étoile, on l'ajoute au tableau de noeuds.
-      // Si le caractère précédent est une parenthèse fermante, on ajoute un opérateur
-      // de concaténation '.' au tableau de noeuds.
       case '*':
         leaf_index++;
-        leaves[leaf_index].value = *curr_char;
-        leaves[leaf_index].index = leaf_index;
-        leaves[leaf_index].parent = NULL;
-        leaves[leaf_index].left_child = &leaves[leaf_index-1];
-        leaves[leaf_index].right_child = NULL;
-        leaves[leaf_index-1].parent = &leaves[leaf_index];
+        leaves[leaf_index] = malloc(sizeof(TreeNode));
+        initialize_leaf(leaves[leaf_index], *curr_char, leaf_index);
+        leaves[leaf_index]->left_child = leaves[leaf_index-1];
+        leaves[leaf_index-1]->parent = leaves[leaf_index];
 
         if (*prev_char == ')') {
-          if (aux_operator[operator_index].value == '.') {
+          if (aux_operator[operator_index] && aux_operator[operator_index]->value == '.') {
             leaf_index++;
-            leaves[leaf_index].value = '.';
-            leaves[leaf_index].index = leaf_index;
-            leaves[leaf_index].parent = NULL;
-            leaves[leaf_index].left_child = NULL;
-            leaves[leaf_index].right_child = NULL;
+            leaves[leaf_index] = malloc(sizeof(TreeNode));
+            initialize_leaf(leaves[leaf_index], '.', leaf_index);
 
             for (int j = leaf_index-1; j >= 0; j--) {
-              if (leaves[j].parent == NULL) {
-                leaves[j].parent = &leaves[leaf_index];
-                if (leaves[leaf_index].right_child == NULL) {
-                  leaves[leaf_index].right_child = &leaves[j];
+              if (leaves[j]->parent == NULL) {
+                leaves[j]->parent = leaves[leaf_index];
+                if (leaves[leaf_index]->right_child == NULL) {
+                  leaves[leaf_index]->right_child = leaves[j];
                 }
                 else {
-                  leaves[leaf_index].left_child = &leaves[j];
+                  leaves[leaf_index]->left_child = leaves[j];
                   break;
                 }
               }
             }
+
+            free(aux_operator[operator_index]);
+            aux_operator[operator_index] = NULL;    
             operator_index--;
           }
         } 
         break;
-      // Si le caractère courant est une lettre, on l'ajoute au tableau de noeuds.
-      // Si le caractère précédent n'est pas un opérateur ou est une parenthèse fermante,
-      // on ajoute un opérateur de concaténation '.' au tableau de noeuds.
       default:
         if (*prev_char == ')' && operator_index >= 0) {
           leaf_index++;
-          leaves[leaf_index].value = aux_operator[operator_index].value;
-          leaves[leaf_index].index = leaf_index;
-          leaves[leaf_index].parent = NULL;
-          leaves[leaf_index].left_child = NULL;
-          leaves[leaf_index].right_child = NULL;
+          leaves[leaf_index] = malloc(sizeof(TreeNode));
+          initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
 
-          if (aux_operator[operator_index].value == '.') {
+          if (aux_operator[operator_index] && aux_operator[operator_index]->value == '.') {
             for (int j = leaf_index-1; j >= 0; j--) {
-              if (leaves[j].parent == NULL) {
-                leaves[j].parent = &leaves[leaf_index];
-                if (leaves[leaf_index].right_child == NULL) {
-                  leaves[leaf_index].right_child = &leaves[j];
+              if (leaves[j]->parent == NULL) {
+                leaves[j]->parent = leaves[leaf_index];
+                if (leaves[leaf_index]->right_child == NULL) {
+                  leaves[leaf_index]->right_child = leaves[j];
                 }
                 else {
-                  leaves[leaf_index].left_child = &leaves[j];
+                  leaves[leaf_index]->left_child = leaves[j];
                   break;
                 }
               }
             }
-          } else if (aux_operator[operator_index].value == '|') {
-            leaves[leaf_index].left_child = &leaves[leaf_index-2];
-            leaves[leaf_index].right_child = &leaves[leaf_index-1];
-            leaves[leaf_index-2].parent = &leaves[leaf_index];
-            leaves[leaf_index-1].parent = &leaves[leaf_index];
+          } else if (aux_operator[operator_index] && aux_operator[operator_index]->value == '|') {
+            leaves[leaf_index]->left_child = leaves[leaf_index-2];
+            leaves[leaf_index]->right_child = leaves[leaf_index-1];
+            leaves[leaf_index-2]->parent = leaves[leaf_index];
+            leaves[leaf_index-1]->parent = leaves[leaf_index];
           }
+          
+          free(aux_operator[operator_index]);
+          aux_operator[operator_index] = NULL;
           operator_index--;
         }
 
         leaf_index++;
-        leaves[leaf_index].value = *curr_char;
-        leaves[leaf_index].index = leaf_index;
-        leaves[leaf_index].parent = NULL;
-        leaves[leaf_index].left_child = NULL;
-        leaves[leaf_index].right_child = NULL;
+        leaves[leaf_index] = malloc(sizeof(TreeNode));
+        initialize_leaf(leaves[leaf_index], *curr_char, leaf_index);
 
         if (*prev_char == '|') {}
         else if (*prev_char != '(') {
           leaf_index++;
-          leaves[leaf_index].value = '.';
-          leaves[leaf_index].index = leaf_index;
-          leaves[leaf_index].parent = NULL;
-          leaves[leaf_index].left_child = NULL;
-          leaves[leaf_index].right_child = NULL;
-
+          leaves[leaf_index] = malloc(sizeof(TreeNode));
+          initialize_leaf(leaves[leaf_index], '.', leaf_index);
+          
           for (int j = leaf_index-1; j >= 0; j--) {
-            if (leaves[j].parent == NULL) {
-              leaves[j].parent = &leaves[leaf_index];
-              if (leaves[leaf_index].right_child == NULL) {
-                leaves[leaf_index].right_child = &leaves[j];
+            if (leaves[j]->parent == NULL) {
+              leaves[j]->parent = leaves[leaf_index];
+              if (leaves[leaf_index]->right_child == NULL) {
+                leaves[leaf_index]->right_child = leaves[j];
               }
               else {
-                leaves[leaf_index].left_child = &leaves[j];
+                leaves[leaf_index]->left_child = leaves[j];
                 break;
               }
             }
@@ -291,40 +261,78 @@ SyntaxTree *create_syntax_tree(char *expression) {
         }
         break;
     }
-    // printf("iter %d, curr_char: %c\n", i, *curr_char);
-    // for (int j = 0; j < nodes; j++) {
-    //   printf("%c", leaves[j].value);
-    // }
-    // printf("\n");
-    // for (int j = 0; j < nodes; j++) {
-    //   printf("%c", aux_operator[j].value);
-    // }
-    // printf("\n\n");
+    printf("iter %d, curr_char: %c\n", i, *curr_char);
+    printf("\n\n");
   }
-
-  // On pointe la racine de l'arbre vers le dernier noeud du tableau de noeuds
-  // et on pointe le tableau de noeuds. On libère la mémoire du tableau d'opérateurs.
-  tree->root = &leaves[nodes-1];
-  tree->leaves = leaves;
-  // for (int i = 0; i < tree->num_leaves; i++) {
-  //   printf("Node %d: %c\t%d\t%d\t%d\n", 
-  //     tree->leaves[i].index+1, 
-  //     tree->leaves[i].value,
-  //     tree->leaves[i].parent == NULL ? -1 : tree->leaves[i].parent->index+1,
-  //     tree->leaves[i].left_child == NULL ? -1 : tree->leaves[i].left_child->index+1,
-  //     tree->leaves[i].right_child == NULL ? -1 : tree->leaves[i].right_child->index+1);
-  // }
-  // for (int i = 0; i < operator_index+1; i++) {
-  //   printf("Operator %d: %c\t%d\t%d\t%d\n", 
-  //     aux_operator[i].index+1, 
-  //     aux_operator[i].value,
-  //     aux_operator[i].parent == NULL ? -1 : aux_operator[i].parent->index+1,
-  //     aux_operator[i].left_child == NULL ? -1 : aux_operator[i].left_child->index+1,
-  //     aux_operator[i].right_child == NULL ? -1 : aux_operator[i].right_child->index+1);
-  // }
-  free(aux_operator);
   
+  tree->root = leaves[nodes-1];
+  tree->leaves = leaves;
 
-  // On retourne l'arbre syntaxique
+  display_tree(tree);
+  free(aux_operator);
+
   return tree;
+}
+
+
+void initialize_leaf(TreeNode *leaf, char value, int index) {
+  leaf->value = value;
+  leaf->index = index;
+  leaf->parent = NULL;
+  leaf->left_child = NULL;
+  leaf->right_child = NULL;
+}
+
+
+void display_tree(SyntaxTree *tree) {
+  for (int i = 0; i < tree->num_leaves; i++) {
+    if (tree->leaves[i]) {
+      printf("Node %d:\n", i);
+      printf("  index: %d\n", tree->leaves[i]->index);
+      printf("  value: %c\n", tree->leaves[i]->value);
+      printf("  parent: %c\n", (tree->leaves[i]->parent) ? tree->leaves[i]->parent->value : ' ');
+      printf("  left_child: %c\n", (tree->leaves[i]->left_child) ? tree->leaves[i]->left_child->value : ' ');
+      printf("  right_child: %c\n\n", (tree->leaves[i]->right_child) ? tree->leaves[i]->right_child->value : ' ');
+    } else {
+      printf("Node Unknown.\n\n");
+    }
+  }
+}
+
+
+void export_node(FILE *f, TreeNode *leaf) {
+    if (!leaf) return;
+
+    // Print current node
+    fprintf(f, "  node%d [label=\"%d:  %c\"];\n", leaf->index, leaf->index+1, leaf->value);
+
+    // Print left edge
+    if (leaf->left_child) {
+        fprintf(f, "  node%d -> node%d [label=\"\"];\n", leaf->index, leaf->left_child->index);
+        export_node(f, leaf->left_child);
+    }
+
+    // Print right edge
+    if (leaf->right_child) {
+        fprintf(f, "  node%d -> node%d [label=\"\"];\n", leaf->index, leaf->right_child->index);
+        export_node(f, leaf->right_child);
+    }
+}
+
+
+void export_tree_to_graphviz(const char *filename, SyntaxTree *tree) {
+    FILE* f = fopen(filename, "w");
+    if (!f) {
+        perror("Erreur d'ouverture de fichier.");
+        return;
+    }
+
+    fprintf(f, "digraph SyntaxTree {\n");
+    fprintf(f, "  node [shape=circle];\n");
+
+    if (tree->root)
+        export_node(f, tree->root);
+
+    fprintf(f, "}\n");
+    fclose(f);
 }
