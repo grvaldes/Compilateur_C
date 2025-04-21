@@ -145,10 +145,18 @@ SyntaxTree *create_syntax_tree(char *expression) {
             leaf_index++;
             leaves[leaf_index] = malloc(sizeof(TreeNode));
             initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
-            leaves[leaf_index]->left_child = leaves[leaf_index-2]; 
-            leaves[leaf_index]->right_child = leaves[leaf_index-1];
-            leaves[leaf_index-2]->parent = leaves[leaf_index];
-            leaves[leaf_index-1]->parent = leaves[leaf_index];
+            for (int j = leaf_index-1; j >= 0; j--) {
+              if (leaves[j]->parent == NULL) {
+                leaves[j]->parent = leaves[leaf_index];
+                if (leaves[leaf_index]->right_child == NULL) {
+                  leaves[leaf_index]->right_child = leaves[j];
+                }
+                else {
+                  leaves[leaf_index]->left_child = leaves[j];
+                  break;
+                }
+              }
+            }
 
             free(aux_operator[operator_index]);
             aux_operator[operator_index] = NULL;
@@ -211,7 +219,7 @@ SyntaxTree *create_syntax_tree(char *expression) {
           leaves[leaf_index] = malloc(sizeof(TreeNode));
           initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
 
-          if (aux_operator[operator_index] && aux_operator[operator_index]->value == '.') {
+          if (aux_operator[operator_index] && aux_operator[operator_index]->value != ')') {
             for (int j = leaf_index-1; j >= 0; j--) {
               if (leaves[j]->parent == NULL) {
                 leaves[j]->parent = leaves[leaf_index];
@@ -224,12 +232,7 @@ SyntaxTree *create_syntax_tree(char *expression) {
                 }
               }
             }
-          } else if (aux_operator[operator_index] && aux_operator[operator_index]->value == '|') {
-            leaves[leaf_index]->left_child = leaves[leaf_index-2];
-            leaves[leaf_index]->right_child = leaves[leaf_index-1];
-            leaves[leaf_index-2]->parent = leaves[leaf_index];
-            leaves[leaf_index-1]->parent = leaves[leaf_index];
-          }
+          } 
           
           free(aux_operator[operator_index]);
           aux_operator[operator_index] = NULL;
@@ -263,6 +266,31 @@ SyntaxTree *create_syntax_tree(char *expression) {
     }
     printf("iter %d, curr_char: %c\n", i, *curr_char);
     printf("\n\n");
+  }
+
+  while (operator_index >= 0) {
+    leaf_index++;
+    leaves[leaf_index] = malloc(sizeof(TreeNode));
+    initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
+
+    if (aux_operator[operator_index]) {
+      for (int j = leaf_index-1; j >= 0; j--) {
+        if (leaves[j]->parent == NULL) {
+          leaves[j]->parent = leaves[leaf_index];
+          if (leaves[leaf_index]->right_child == NULL) {
+            leaves[leaf_index]->right_child = leaves[j];
+          }
+          else {
+            leaves[leaf_index]->left_child = leaves[j];
+            break;
+          }
+        }
+      }
+    }
+
+    free(aux_operator[operator_index]);
+    aux_operator[operator_index] = NULL;
+    operator_index--;
   }
   
   tree->root = leaves[nodes-1];

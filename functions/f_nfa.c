@@ -58,9 +58,9 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
         }
         break;
       case '|':
-  //       // Créer un NFA pour l'opération de choix
-  //       // On initialise le premier et le dernier état de l'automate es ses 4 transitions.
-  //       // Ces états sont les états non hérités des automates nfa1 et nfa2.
+        // Créer un NFA pour l'opération de choix
+        // On initialise le premier et le dernier état de l'automate es ses 4 transitions.
+        // Ces états sont les états non hérités des automates nfa1 et nfa2.
         {
           NFAState *state0 = malloc(sizeof(NFAState));
           NFAState *state1 = malloc(sizeof(NFAState));
@@ -71,10 +71,10 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
           initialize_state(state0, index++, IS_START, NOT_FINAL);
           initialize_state(state1, index++, NOT_START, IS_FINAL);
-          initialize_transition(trans0, state0, return_nfa->states[index_initial[0]], ' ');
-          initialize_transition(trans1, state0, return_nfa->states[index_initial[1]], ' ');
-          initialize_transition(trans2, return_nfa->states[index_final[0]], state1, ' ');
-          initialize_transition(trans3, return_nfa->states[index_final[1]], state1, ' ');
+          initialize_transition(trans0, state0, return_nfa->states[index_initial[0]], '#');
+          initialize_transition(trans1, state0, return_nfa->states[index_initial[1]], '#');
+          initialize_transition(trans2, return_nfa->states[index_final[0]], state1, '#');
+          initialize_transition(trans3, return_nfa->states[index_final[1]], state1, '#');
 
           add_transition_to_state(trans0, state0);
           add_transition_to_state(trans1, state0);
@@ -106,9 +106,9 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
         }
         break;
       case '*':
-  //       // Créer un NFA pour l'opération de fermeture de Kleene
-  //       // On initialise le premier et le dernier état de l'automate es ses 4 transitions.
-  //       // Ces états sont les états non hérités des automates nfa1 et nfa2.
+        // Créer un NFA pour l'opération de fermeture de Kleene
+        // On initialise le premier et le dernier état de l'automate es ses 4 transitions.
+        // Ces états sont les états non hérités des automates nfa1 et nfa2.
         {         
           NFAState *state0 = malloc(sizeof(NFAState));
           NFAState *state1 = malloc(sizeof(NFAState));
@@ -119,10 +119,10 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
           initialize_state(state0, index++, IS_START, NOT_FINAL);
           initialize_state(state1, index++, NOT_START, IS_FINAL);
-          initialize_transition(trans0, state0, return_nfa->states[index_initial[1]], ' ');
-          initialize_transition(trans1, state0, state1, ' ');
-          initialize_transition(trans2, return_nfa->states[index_final[1]], return_nfa->states[index_initial[1]], ' ');
-          initialize_transition(trans3, return_nfa->states[index_final[1]], state1, ' ');
+          initialize_transition(trans0, state0, return_nfa->states[index_initial[1]], '#');
+          initialize_transition(trans1, state0, state1, '#');
+          initialize_transition(trans2, return_nfa->states[index_final[1]], return_nfa->states[index_initial[1]], '#');
+          initialize_transition(trans3, return_nfa->states[index_final[1]], state1, '#');
 
           add_transition_to_state(trans0, state0);
           add_transition_to_state(trans1, state0);
@@ -152,12 +152,12 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
         }
         break;
       case ')':
-  //       // Créer un NFA pour l'opération de parenthèse.
-  //       // On fait rien.
+        // Créer un NFA pour l'opération de parenthèse.
+        // On fait rien.
         break;
       default:
-  //       // Créer un NFA pour une lettre. NFA a deux états et une transition.
-  //       // On alloue la mémoire pour les attributs de l'automate.
+        // Créer un NFA pour une lettre. NFA a deux états et une transition.
+        // On alloue la mémoire pour les attributs de l'automate.
         {
           NFAState *state0 = malloc(sizeof(NFAState));
           NFAState *state1 = malloc(sizeof(NFAState));
@@ -197,7 +197,7 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
 void display_nfa(NFA *nfa) {
   for (int i = 0; i < nfa->num_states; i++) {
-    printf("State %d:%c%c\n  out:\n    ", nfa->states[i]->index, nfa->states[i]->is_final ? 'F' : ' ',nfa->states[i]->is_start ? 'I' : ' ');
+    printf("State %d:%c%c\n  out:\n    ", nfa->states[i]->index, nfa->states[i]->is_final ? 'F' : '#',nfa->states[i]->is_start ? 'I' : '#');
     for (int j = 0; j < nfa->states[i]->num_transitions; j++) {
       printf(" %d(%c)", nfa->states[i]->transitions[j]->to->index,nfa->states[i]->transitions[j]->symbol);
     }
@@ -349,7 +349,6 @@ void export_nfa_to_graphviz(const char* filename, NFA* nfa) {
     for (int i = 0; i < nfa->num_transitions; ++i) {
         NFATransition* t = nfa->transitions[i];
         char label = t->symbol;
-        if (label == '\0') label = 'E';
         fprintf(f, "  q%d -> q%d [label=\"%c\"];\n", t->from->index, t->to->index, label);
     }
 
