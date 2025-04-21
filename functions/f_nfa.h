@@ -20,6 +20,7 @@ typedef struct NFAState {
     int index;                      // Indice de l'état
     int is_start;                   // Indicateur d'état de départ
     int is_final;                   // Indicateur d'état final
+    int is_deleted;                 // Indicateur d'état ignoré.
     int num_transitions;            // Nombre de transitions sortantes
     NFATransition **transitions;     // Pointeur vers les états suivantes
 } NFAState;
@@ -41,6 +42,8 @@ void initialize_transition(NFATransition* transition, NFAState* from, NFAState* 
 void add_transition_to_state(NFATransition* transition, NFAState* state);
 void add_transition_to_nfa(NFA* nfa, NFATransition* transition, int counter);
 void add_state_to_nfa(NFA* nfa, NFAState* state, int position, int counter);
+void merge_nodes_nfa(NFA* nfa);
+void reorder_indices_nfa(NFA* nfa);
 
 void print_state(NFAState *state);
 void print_transition(NFATransition *transition);

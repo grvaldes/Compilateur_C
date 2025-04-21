@@ -1,7 +1,7 @@
-(ab)|(bcc)
 (a|b)*bab
-ac|b
 ab(ac|b)*cb
+(ab|bcc)
+ac|b
 ab(ac|b)cb
 .
 (c|b)*

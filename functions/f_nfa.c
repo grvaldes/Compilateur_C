@@ -15,13 +15,8 @@
 NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
   // Compteurs
   int index = 0;
-  int index_initial[2];
-  int index_final[2];
-
-  index_initial[0] = 0;
-  index_initial[1] = 0;
-  index_final[0] = 0;
-  index_final[1] = 0;
+  NFAState** initial_node = malloc(sizeof(NFAState*) * tree->num_leaves);
+  NFAState** final_node = malloc(sizeof(NFAState*) * tree->num_leaves);
 
   int transition_counter = 0;
   int state_counter = 0;
@@ -37,24 +32,27 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
     switch (tree->leaves[i]->value) {
       case '.':
         {
+          // Trouver les enfants
+          int child_index_left = tree->leaves[i]->left_child->index;
+          int child_index_right = tree->leaves[i]->right_child->index;
+          
           // Créer un NFA pour l'opération de concaténation
           NFATransition* trans0 = malloc(sizeof(NFATransition));
 
-          initialize_transition(trans0, return_nfa->states[index_final[0]], return_nfa->states[index_initial[1]], '@');
-          add_transition_to_state(trans0, return_nfa->states[index_final[0]]);
+          initialize_transition(trans0, final_node[child_index_left], initial_node[child_index_right], '@');
+          add_transition_to_state(trans0, final_node[child_index_left]);
           add_transition_to_nfa(return_nfa, trans0, transition_counter++);
 
-          return_nfa->states[index_final[0]]->is_final = 0;
-          return_nfa->states[index_initial[1]]->is_start = 0;
+          final_node[child_index_left]->is_final = 0;
+          initial_node[child_index_right]->is_start = 0;
 
-          index_initial[0] = index_initial[1];
-          index_final[0] = index_final[1];
-          index_initial[1] = index_initial[0];
+          initial_node[i] = initial_node[child_index_left];
+          final_node[i] = final_node[child_index_right];
 
-          printf("index_initial[0] = %d\n",index_initial[0]);
-          printf("index_final[0] = %d\n",index_final[0]);
-          printf("index_initial[1] = %d\n",index_initial[1]);
-          printf("index_final[1] = %d\n",index_final[1]);
+          // printf("index_initial[0] = %d\n",index_initial[0]);
+          // printf("index_final[0] = %d\n",index_final[0]);
+          // printf("index_initial[1] = %d\n",index_initial[1]);
+          // printf("index_final[1] = %d\n",index_final[1]);
         }
         break;
       case '|':
@@ -62,6 +60,9 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
         // On initialise le premier et le dernier état de l'automate es ses 4 transitions.
         // Ces états sont les états non hérités des automates nfa1 et nfa2.
         {
+          int child_index_left = tree->leaves[i]->left_child->index;
+          int child_index_right = tree->leaves[i]->right_child->index;
+          
           NFAState *state0 = malloc(sizeof(NFAState));
           NFAState *state1 = malloc(sizeof(NFAState));
           NFATransition *trans0 = malloc(sizeof(NFATransition));
@@ -71,15 +72,15 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
           initialize_state(state0, index++, IS_START, NOT_FINAL);
           initialize_state(state1, index++, NOT_START, IS_FINAL);
-          initialize_transition(trans0, state0, return_nfa->states[index_initial[0]], '#');
-          initialize_transition(trans1, state0, return_nfa->states[index_initial[1]], '#');
-          initialize_transition(trans2, return_nfa->states[index_final[0]], state1, '#');
-          initialize_transition(trans3, return_nfa->states[index_final[1]], state1, '#');
+          initialize_transition(trans0, state0, initial_node[child_index_left], '#');
+          initialize_transition(trans1, state0, initial_node[child_index_right], '#');
+          initialize_transition(trans2, final_node[child_index_left], state1, '#');
+          initialize_transition(trans3, final_node[child_index_right], state1, '#');
 
           add_transition_to_state(trans0, state0);
           add_transition_to_state(trans1, state0);
-          add_transition_to_state(trans2, return_nfa->states[index_final[0]]);
-          add_transition_to_state(trans3, return_nfa->states[index_final[1]]);
+          add_transition_to_state(trans2, final_node[child_index_left]);
+          add_transition_to_state(trans3, final_node[child_index_right]);
 
           add_transition_to_nfa(return_nfa, trans0, transition_counter++);
           add_transition_to_nfa(return_nfa, trans1, transition_counter++);
@@ -89,27 +90,27 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           add_state_to_nfa(return_nfa, state0, AT_START, state_counter++);
           add_state_to_nfa(return_nfa, state1, AT_END, state_counter++);
 
-          return_nfa->states[index_initial[0]]->is_start = 0;
-          return_nfa->states[index_initial[1]]->is_start = 0;
-          return_nfa->states[index_final[0]]->is_final = 0;
-          return_nfa->states[index_final[1]]->is_final = 0;
+          initial_node[child_index_left]->is_start = 0;
+          initial_node[child_index_right]->is_start = 0;
+          final_node[child_index_left]->is_final = 0;
+          final_node[child_index_right]->is_final = 0;
 
-          index_initial[0] = index_initial[1];
-          index_final[0] = index_final[1];
-          index_initial[1] = state0->index;
-          index_final[1] = state1->index;
+          initial_node[i] = state0;
+          final_node[i] = state1;
 
-          printf("index_initial[0] = %d\n",index_initial[0]);
-          printf("index_final[0] = %d\n",index_final[0]);
-          printf("index_initial[1] = %d\n",index_initial[1]);
-          printf("index_final[1] = %d\n",index_final[1]);
+          // printf("index_initial[0] = %d\n",index_initial[0]);
+          // printf("index_final[0] = %d\n",index_final[0]);
+          // printf("index_initial[1] = %d\n",index_initial[1]);
+          // printf("index_final[1] = %d\n",index_final[1]);
         }
         break;
       case '*':
         // Créer un NFA pour l'opération de fermeture de Kleene
         // On initialise le premier et le dernier état de l'automate es ses 4 transitions.
         // Ces états sont les états non hérités des automates nfa1 et nfa2.
-        {         
+        {    
+          int child_index = tree->leaves[i]->left_child->index;
+          
           NFAState *state0 = malloc(sizeof(NFAState));
           NFAState *state1 = malloc(sizeof(NFAState));
           NFATransition *trans0 = malloc(sizeof(NFATransition));
@@ -119,15 +120,15 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
           initialize_state(state0, index++, IS_START, NOT_FINAL);
           initialize_state(state1, index++, NOT_START, IS_FINAL);
-          initialize_transition(trans0, state0, return_nfa->states[index_initial[1]], '#');
+          initialize_transition(trans0, state0, initial_node[child_index], '#');
           initialize_transition(trans1, state0, state1, '#');
-          initialize_transition(trans2, return_nfa->states[index_final[1]], return_nfa->states[index_initial[1]], '#');
-          initialize_transition(trans3, return_nfa->states[index_final[1]], state1, '#');
+          initialize_transition(trans2, final_node[child_index], initial_node[child_index], '#');
+          initialize_transition(trans3, final_node[child_index], state1, '#');
 
           add_transition_to_state(trans0, state0);
           add_transition_to_state(trans1, state0);
-          add_transition_to_state(trans2, return_nfa->states[index_final[1]]);
-          add_transition_to_state(trans3, return_nfa->states[index_final[1]]);
+          add_transition_to_state(trans2, final_node[child_index]);
+          add_transition_to_state(trans3, final_node[child_index]);
 
           add_state_to_nfa(return_nfa, state0, AT_START, state_counter++);
           add_state_to_nfa(return_nfa, state1, AT_END, state_counter++);
@@ -137,23 +138,22 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           add_transition_to_nfa(return_nfa, trans2, transition_counter++);
           add_transition_to_nfa(return_nfa, trans3, transition_counter++);
 
-          return_nfa->states[index_initial[1]]->is_start = 0;
-          return_nfa->states[index_final[1]]->is_final = 0;
+          initial_node[child_index]->is_start = 0;
+          final_node[child_index]->is_final = 0;
 
-          index_initial[0] = index_initial[1];
-          index_final[0] = index_final[1];
-          index_initial[1] = state0->index;
-          index_final[1] = state1->index;
+          initial_node[i] = state0;
+          final_node[i] = state1;
 
-          printf("index_initial[0] = %d\n",index_initial[0]);
-          printf("index_final[0] = %d\n",index_final[0]);
-          printf("index_initial[1] = %d\n",index_initial[1]);
-          printf("index_final[1] = %d\n",index_final[1]);
+          // printf("index_initial[0] = %d\n",index_initial[0]);
+          // printf("index_final[0] = %d\n",index_final[0]);
+          // printf("index_initial[1] = %d\n",index_initial[1]);
+          // printf("index_final[1] = %d\n",index_final[1]);
         }
         break;
       case ')':
         // Créer un NFA pour l'opération de parenthèse.
-        // On fait rien.
+        initial_node[i] = initial_node[i-1];
+        final_node[i] = final_node[i-1];
         break;
       default:
         // Créer un NFA pour une lettre. NFA a deux états et une transition.
@@ -176,20 +176,20 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           add_state_to_nfa(return_nfa, state1, AT_END, state_counter++);
           add_transition_to_nfa(return_nfa, transition0, transition_counter++);
 
-          index_initial[0] = index_initial[1];
-          index_final[0] = index_final[1];
-          index_initial[1] = state0->index;
-          index_final[1] = state1->index;
+          initial_node[i] = state0;
+          final_node[i] = state1;
 
-          printf("index_initial[0] = %d\n",index_initial[0]);
-          printf("index_final[0] = %d\n",index_final[0]);
-          printf("index_initial[1] = %d\n",index_initial[1]);
-          printf("index_final[1] = %d\n",index_final[1]);
+          // printf("index_initial[0] = %d\n",index_initial[0]);
+          // printf("index_final[0] = %d\n",index_final[0]);
+          // printf("index_initial[1] = %d\n",index_initial[1]);
+          // printf("index_final[1] = %d\n",index_final[1]);
         }
         break;
     }
   }
-  display_nfa(return_nfa);
+
+  merge_nodes_nfa(return_nfa);
+  reorder_indices_nfa(return_nfa);
 
   return return_nfa;
 }
@@ -197,7 +197,7 @@ NFA *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
 void display_nfa(NFA *nfa) {
   for (int i = 0; i < nfa->num_states; i++) {
-    printf("State %d:%c%c\n  out:\n    ", nfa->states[i]->index, nfa->states[i]->is_final ? 'F' : '#',nfa->states[i]->is_start ? 'I' : '#');
+    printf("State %d:%c%c\n  out:\n    ", nfa->states[i]->index, nfa->states[i]->is_final ? 'F' : ' ',nfa->states[i]->is_start ? 'I' : ' ');
     for (int j = 0; j < nfa->states[i]->num_transitions; j++) {
       printf(" %d(%c)", nfa->states[i]->transitions[j]->to->index,nfa->states[i]->transitions[j]->symbol);
     }
@@ -245,6 +245,7 @@ void initialize_state(NFAState* state, int index, int is_start, int is_final) {
   state->index = index;
   state->is_start = is_start;
   state->is_final = is_final;
+  state->is_deleted = 0;
   state->num_transitions = 0;
   state->transitions = NULL;
 }
@@ -267,15 +268,30 @@ void add_transition_to_nfa(NFA* nfa, NFATransition* transition, int counter) {
 
 
 void add_state_to_nfa(NFA* nfa, NFAState* state, int position, int counter) {
-  if (!position) {
-    for (int i = 0; i < counter; i++) {
-      nfa->states[i]->index++;
-    }
-    state->index = 0;
-  }
-
   nfa->states[counter] = state;
 }
+
+
+void merge_nodes_nfa(NFA *nfa) {
+  for (int i=0; i < nfa->num_transitions; i++) {
+    if (nfa->transitions[i]->symbol == '@') {
+      NFAState* node_to_delete = nfa->transitions[i]->from;
+      NFAState* node_to_merge = nfa->transitions[i]->to;
+
+      for (int j=0; j < nfa->num_transitions; j++) {
+        if (nfa->transitions[j]->to->index == node_to_delete->index) {
+          nfa->transitions[j]->to = node_to_merge;
+        }
+      }
+
+      nfa->transitions[i]->to = node_to_delete;
+      node_to_delete->is_deleted = 1;
+    }
+  }
+}
+
+
+void reorder_indices_nfa(NFA *nfa) {}
 
 
 void print_state(NFAState *state) {
@@ -332,6 +348,7 @@ void export_nfa_to_graphviz(const char* filename, NFA* nfa) {
 
     for (int i = 0; i < nfa->num_states; ++i) {
         NFAState* state = nfa->states[i];
+        if (state->is_deleted) continue;
         if (state->is_final)
             fprintf(f, "  q%d [shape=doublecircle];\n", state->index);
         else
@@ -340,6 +357,7 @@ void export_nfa_to_graphviz(const char* filename, NFA* nfa) {
 
     for (int i = 0; i < nfa->num_states; ++i) {
         NFAState* state = nfa->states[i];
+        if (state->is_deleted) continue;
         if (state->is_start) {
             fprintf(f, "  start_q%d [shape=point];\n", state->index);
             fprintf(f, "  start_q%d -> q%d;\n", state->index, state->index);
@@ -349,7 +367,9 @@ void export_nfa_to_graphviz(const char* filename, NFA* nfa) {
     for (int i = 0; i < nfa->num_transitions; ++i) {
         NFATransition* t = nfa->transitions[i];
         char label = t->symbol;
-        fprintf(f, "  q%d -> q%d [label=\"%c\"];\n", t->from->index, t->to->index, label);
+        if (label != '@') {
+          fprintf(f, "  q%d -> q%d [label=\"%c\"];\n", t->from->index, t->to->index, label);
+        }
     }
 
     fprintf(f, "}\n");
