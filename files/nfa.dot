@@ -1,4 +1,4 @@
-digraph NFA {
+digraph Automaton {
   rankdir=LR;
   node [shape=circle];
   q0;

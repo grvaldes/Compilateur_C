@@ -1,0 +1,26 @@
+L'expression régulière à analyser est : (a|b)*bab
+L'arbre a 11 noeuds.
+ab
+2
+L'automate non déterministe a 14 états et 16 transitions.
+node_set[0]: 6
+transition: #
+receiving index: 4
+node_set[1]: 4
+node_set[1]: 4
+transition: #
+receiving index: 0
+node_set[2]: 0
+node_set[2]: 0
+transition: a
+transition: #
+receiving index: 2
+node_set[3]: 2
+node_set[3]: 2
+transition: b
+transition: #
+receiving index: 8
+node_set[4]: 8
+node_set[4]: 8
+transition: b
+0(6)   1(4)   2(0)   3(2)   4(8)   

@@ -12,7 +12,8 @@
     "vector": "c",
     "__locale": "cpp",
     "locale": "cpp",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "f_nfa.h": "c"
   },
   "cSpell.words": [
     "Kleene",

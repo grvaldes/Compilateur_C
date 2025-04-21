@@ -17,6 +17,8 @@ typedef struct SyntaxTree {
   int num_leaves;                 // Nombre de feuilles dans l'arbre
   TreeNode *root;                 // Pointeur vers la racine de l'arbre
   TreeNode **leaves;              // Tableau de pointeurs vers les feuilles (ordonnées).
+  int num_unique_chars;
+  char* unique_chars;
 } SyntaxTree;
 
 // Fonctions
@@ -28,5 +30,7 @@ void display_tree(SyntaxTree *tree);
 
 void export_node(FILE *f, TreeNode *node);
 void export_tree_to_graphviz(const char *filename, SyntaxTree *tree);
+
+void find_unique_alphanumerics(const char* input, char* output, int* out_count);
 
 #endif

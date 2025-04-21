@@ -7,6 +7,7 @@
 
 #include "functions/f_tree.h"
 #include "functions/f_nfa.h"
+#include "functions/f_dfa.h"
 
 int main(int argc, char *argv[]) {
   // Vérification du nombre d'arguments
@@ -43,9 +44,16 @@ int main(int argc, char *argv[]) {
   system("dot -Tpng files/tree.dot -o files/tree.png");
 
   // Création de l'automate non déterministe
-  NFA *nfa = create_nfa_from_syntax_tree(tree);
+  Automaton *nfa = create_nfa_from_syntax_tree(tree);
   export_nfa_to_graphviz("files/nfa.dot", nfa);
   system("dot -Tpng files/nfa.dot -o files/nfa.png");
+  fprintf(stdout, "L'automate non déterministe a %d états et %d transitions.\n", nfa->num_states, nfa->num_transitions);
+
+
+  // Création de l'automate déterministe
+  Automaton *dfa = create_dfa_from_nfa(nfa);
+  // export_nfa_to_graphviz("files/dfa.dot", dfa);
+  // system("dot -Tpng files/dfa.dot -o files/dfa.png");
 
   // Fermeture du fichier et libération de la mémoire
   // free(tree->leaves);

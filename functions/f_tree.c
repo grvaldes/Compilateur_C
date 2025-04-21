@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "f_tree.h"
+
+#define ASCII_SIZE 128
 
 // Fonction que vérifie si l'arbre est correct (parenthèses bien fermées et
 // expression ne commençant pas par '|', '*' ou ')' ).
@@ -264,8 +267,8 @@ SyntaxTree *create_syntax_tree(char *expression) {
         }
         break;
     }
-    printf("iter %d, curr_char: %c\n", i, *curr_char);
-    printf("\n\n");
+    // printf("iter %d, curr_char: %c\n", i, *curr_char);
+    // printf("\n\n");
   }
 
   while (operator_index >= 0) {
@@ -292,11 +295,18 @@ SyntaxTree *create_syntax_tree(char *expression) {
     aux_operator[operator_index] = NULL;
     operator_index--;
   }
+
+  char *unique_chars = malloc(sizeof(char) * ASCII_SIZE);
+  int *out_count = malloc(sizeof(int));
+  find_unique_alphanumerics(expression, unique_chars, out_count);
+  unique_chars = realloc(unique_chars, sizeof(char) * *out_count);
   
   tree->root = leaves[nodes-1];
   tree->leaves = leaves;
+  tree->num_unique_chars = *out_count;
+  tree->unique_chars = unique_chars;
 
-  display_tree(tree);
+  // display_tree(tree);
   free(aux_operator);
 
   return tree;
@@ -363,4 +373,20 @@ void export_tree_to_graphviz(const char *filename, SyntaxTree *tree) {
 
     fprintf(f, "}\n");
     fclose(f);
+}
+
+
+void find_unique_alphanumerics(const char* input, char* output, int* out_count) {
+    int seen[128] = {0};
+    int count = 0;
+
+    for (int i = 0; input[i] != '\0'; i++) {
+        char c = input[i];
+        if (isalnum(c) && seen[c] == 0) {
+            seen[c] = 1;
+            output[count++] = c;
+        }
+    }
+    output[count] = '\0'; // Null-terminate the output string
+    if (out_count) *out_count = count;
 }
