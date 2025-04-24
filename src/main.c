@@ -5,9 +5,11 @@
 #define DEBUG
 #define MAX_LINE_LENGTH 1024
 
-#include "functions/f_tree.h"
-#include "functions/f_nfa.h"
-#include "functions/f_dfa.h"
+#include "f_aux_tree.h"
+#include "f_aux_automata.h"
+#include "f_tree.h"
+#include "f_nfa.h"
+// #include "f_dfa.h"
 
 int main(int argc, char *argv[]) {
   // Vérification du nombre d'arguments
@@ -51,7 +53,7 @@ int main(int argc, char *argv[]) {
 
 
   // Création de l'automate déterministe
-  Automaton *dfa = create_dfa_from_nfa(nfa);
+  // Automaton *dfa = create_dfa_from_nfa(nfa);
   // export_nfa_to_graphviz("files/dfa.dot", dfa);
   // system("dot -Tpng files/dfa.dot -o files/dfa.png");
 
