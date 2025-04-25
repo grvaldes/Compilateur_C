@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
 
   // Ouverture du fichier
   FILE *file = fopen(argv[1], "r");
+  // FILE *file = fopen("files/expr.txt", "r");
   if (file == NULL) {
     // Vérification d'erreur d'ouverture du fichier
     fprintf(stderr, "Erreur d'ouverture du fichier.\n");
@@ -53,9 +54,9 @@ int main(int argc, char *argv[]) {
 
 
   // Création de l'automate déterministe
-  // Automaton *dfa = create_dfa_from_nfa(nfa);
-  // export_nfa_to_graphviz("files/dfa.dot", dfa);
-  // system("dot -Tpng files/dfa.dot -o files/dfa.png");
+  Automaton *dfa = create_dfa_from_nfa(nfa);
+  export_nfa_to_graphviz("files/dfa.dot", dfa);
+  system("dot -Tpng files/dfa.dot -o files/dfa.png");
 
   // Fermeture du fichier et libération de la mémoire
   // free(tree->leaves);

@@ -196,17 +196,12 @@ void export_nfa_to_graphviz(const char *filename, Automaton *nfa) {
 
 // DFA Functions
 void follow_path_from_single_state(NodeSet *node_set, AState *initial_state, char value) {
-  printf("node_set[%d]: %d\n", node_set->array_size-1, node_set->node_array[node_set->array_size-1]);
-
   for (int i = 0; i < initial_state->num_transitions; i++) {
-    printf("transition: %c\n", initial_state->transitions[i]->symbol);
-    if (initial_state->transitions[i]->symbol == value) {
-      printf("receiving index: %d\n", initial_state->transitions[i]->to->index);
-      if (!state_in_node_set(initial_state->transitions[i]->to->index, node_set->node_array)) {
+    if (initial_state->transitions[i]->symbol == '#' || initial_state->transitions[i]->symbol == value) {
+      if (!state_in_node_set(initial_state->transitions[i]->to->index, node_set)) {
         node_set->array_size++;
         node_set->node_array = realloc(node_set->node_array, sizeof(int) * (node_set->array_size));
         node_set->node_array[node_set->array_size-1] = initial_state->transitions[i]->to->index;
-        printf("node_set[%d]: %d\n", node_set->array_size-1, node_set->node_array[node_set->array_size-1]);
         follow_path_from_single_state(node_set, initial_state->transitions[i]->to, value);
       }
     }
@@ -218,6 +213,7 @@ void follow_path_from_group_state(Automaton *dfa, Automaton *nfa, AState *initia
   NodeSet *node_set = malloc(sizeof(NodeSet));
   node_set->array_size = 0;
   node_set->node_array = NULL;
+
 
   for (int i=0; i < initial_state->states_set->array_size; i++) {
     follow_path_from_single_state(node_set, nfa->states[initial_state->states_set->node_array[i]], value);
@@ -272,9 +268,10 @@ void initialize_dfa_state(AState *state, int index, int is_start, int is_final, 
 }
 
 
-int state_in_node_set(int index, int *node_set) {
-  for (int i=0; i < sizeof(*node_set)/sizeof(int); i++) {
-    if (index == node_set[i]) return 1;
+int state_in_node_set(int index, NodeSet *node_set) {
+  if(!node_set->node_array) return 0;
+  for (int i=0; i < node_set->array_size; i++) {
+    if (index == node_set->node_array[i]) return 1;
   }
   return 0;
 }
@@ -293,4 +290,16 @@ int compare_node_sets(NodeSet *set1, NodeSet *set2) {
   }
   if (count == set1->array_size) return 1;
   else return 0;
+}
+
+
+void check_final_states(Automaton *dfa, Automaton *nfa) {
+  for (int i=0; i < dfa->num_states; i++) {
+    for (int j=0; j < dfa->states[i]->states_set->array_size; j++) {
+      if (nfa->states[dfa->states[i]->states_set->node_array[j]]->is_final) {
+        dfa->states[i]->is_final = 1;
+        break;
+      }
+    }
+  }
 }

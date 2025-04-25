@@ -39,8 +39,9 @@ void initialize_dfa_state(AState *state, int index, int is_start, int is_final, 
 void add_transition_to_dfa(Automaton *dfa, ATransition *transition);
 void add_state_to_dfa(Automaton *nfa, AState *state);
 
-int state_in_node_set(int index, int *node_set);
+int state_in_node_set(int index, NodeSet *node_set);
 int compare_node_sets(NodeSet *set1, NodeSet *set2);
+void check_final_states(Automaton *dfa, Automaton *nfa);
 
 
 void export_dfa_to_graphviz(const char *filename, Automaton *dfa);
