@@ -31,12 +31,10 @@ SyntaxTree *create_syntax_tree(char *expression) {
   int operator_index = -1;          // Index pour le tableau d'opérateurs
 
   if (expression[0] == '(') {
-    operator_index++;
-    aux_operator[operator_index] = malloc(sizeof(TreeNode));
+    aux_operator[++operator_index] = malloc(sizeof(TreeNode));
     initialize_leaf(aux_operator[operator_index], ')', -1);
   } else {
-    leaf_index++;
-    leaves[leaf_index] = malloc(sizeof(TreeNode));
+    leaves[++leaf_index] = malloc(sizeof(TreeNode));
     initialize_leaf(leaves[leaf_index], expression[0], leaf_index);
   }
 
@@ -47,19 +45,16 @@ SyntaxTree *create_syntax_tree(char *expression) {
     switch (*curr_char) {
       case '(':
         if (*prev_char != '|' && *prev_char != '(') {
-          operator_index++;
-          aux_operator[operator_index] = malloc(sizeof(TreeNode));
+          aux_operator[++operator_index] = malloc(sizeof(TreeNode));
           initialize_leaf(aux_operator[operator_index], '.', -1);
         } 
-        operator_index++;
-        aux_operator[operator_index] = malloc(sizeof(TreeNode));
+        aux_operator[++operator_index] = malloc(sizeof(TreeNode));
         initialize_leaf(aux_operator[operator_index], ')', -1);
         break;
       case ')':
         while(operator_index >= 0 && aux_operator[operator_index] && aux_operator[operator_index]->value != ')') {
           if (operator_index >= 0 && aux_operator[operator_index] && aux_operator[operator_index]->value == '|') {
-            leaf_index++;
-            leaves[leaf_index] = malloc(sizeof(TreeNode));
+            leaves[++leaf_index] = malloc(sizeof(TreeNode));
             initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
             for (int j = leaf_index-1; j >= 0; j--) {
               if (leaves[j]->parent == NULL) {
@@ -75,39 +70,32 @@ SyntaxTree *create_syntax_tree(char *expression) {
             }
 
             free(aux_operator[operator_index]);
-            aux_operator[operator_index] = NULL;
-            operator_index--;
+            aux_operator[operator_index--] = NULL;
           }
         } 
 
         // On arrive à l'ouverture du parenthèse et on l'ajoute à l'arbre
-        leaf_index++;
-        leaves[leaf_index] = malloc(sizeof(TreeNode));
+        leaves[++leaf_index] = malloc(sizeof(TreeNode));
         initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
         leaves[leaf_index]->left_child = leaves[leaf_index-1];
         leaves[leaf_index-1]->parent = leaves[leaf_index];
 
         free(aux_operator[operator_index]);
-        aux_operator[operator_index] = NULL;
-        operator_index--;
-        
+        aux_operator[operator_index--] = NULL;    
         break;
       case '|':
-        operator_index++;
-        aux_operator[operator_index] = malloc(sizeof(TreeNode));
+        aux_operator[++operator_index] = malloc(sizeof(TreeNode));
         initialize_leaf(aux_operator[operator_index], *curr_char, -1);
         break;
       case '*':
-        leaf_index++;
-        leaves[leaf_index] = malloc(sizeof(TreeNode));
+        leaves[++leaf_index] = malloc(sizeof(TreeNode));
         initialize_leaf(leaves[leaf_index], *curr_char, leaf_index);
         leaves[leaf_index]->left_child = leaves[leaf_index-1];
         leaves[leaf_index-1]->parent = leaves[leaf_index];
 
         if (*prev_char == ')') {
           if (operator_index >= 0 && aux_operator[operator_index] && aux_operator[operator_index]->value == '.') {
-            leaf_index++;
-            leaves[leaf_index] = malloc(sizeof(TreeNode));
+            leaves[++leaf_index] = malloc(sizeof(TreeNode));
             initialize_leaf(leaves[leaf_index], '.', leaf_index);
 
             for (int j = leaf_index-1; j >= 0; j--) {
@@ -124,15 +112,13 @@ SyntaxTree *create_syntax_tree(char *expression) {
             }
 
             free(aux_operator[operator_index]);
-            aux_operator[operator_index] = NULL;    
-            operator_index--;
+            aux_operator[operator_index--] = NULL;
           }
         } 
         break;
       default:
         if (*prev_char == ')' && operator_index >= 0) {
-          leaf_index++;
-          leaves[leaf_index] = malloc(sizeof(TreeNode));
+          leaves[++leaf_index] = malloc(sizeof(TreeNode));
           initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
 
           if (operator_index >= 0 && aux_operator[operator_index] && aux_operator[operator_index]->value != ')') {
@@ -151,18 +137,15 @@ SyntaxTree *create_syntax_tree(char *expression) {
           } 
           
           free(aux_operator[operator_index]);
-          aux_operator[operator_index] = NULL;
-          operator_index--;
+          aux_operator[operator_index--] = NULL;
         }
 
-        leaf_index++;
-        leaves[leaf_index] = malloc(sizeof(TreeNode));
+        leaves[++leaf_index] = malloc(sizeof(TreeNode));
         initialize_leaf(leaves[leaf_index], *curr_char, leaf_index);
 
         if (*prev_char == '|') {}
         else if (*prev_char != '(') {
-          leaf_index++;
-          leaves[leaf_index] = malloc(sizeof(TreeNode));
+          leaves[++leaf_index] = malloc(sizeof(TreeNode));
           initialize_leaf(leaves[leaf_index], '.', leaf_index);
           
           for (int j = leaf_index-1; j >= 0; j--) {
@@ -180,13 +163,10 @@ SyntaxTree *create_syntax_tree(char *expression) {
         }
         break;
     }
-    printf("iter %d, curr_char: %c\n", i, *curr_char);
-    printf("\n\n");
   }
 
   while (operator_index >= 0) {
-    leaf_index++;
-    leaves[leaf_index] = malloc(sizeof(TreeNode));
+    leaves[++leaf_index] = malloc(sizeof(TreeNode));
     initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
 
     if (aux_operator[operator_index]) {
@@ -205,21 +185,18 @@ SyntaxTree *create_syntax_tree(char *expression) {
     }
 
     free(aux_operator[operator_index]);
-    aux_operator[operator_index] = NULL;
-    operator_index--;
+    aux_operator[operator_index--] = NULL;
   }
 
   char *unique_chars = malloc(sizeof(char) * ASCII_SIZE);
   int *out_count = malloc(sizeof(int));
   find_unique_alphanumerics(expression, unique_chars, out_count);
-  unique_chars = realloc(unique_chars, sizeof(char) * *out_count);
   
   tree->root = leaves[nodes-1];
   tree->leaves = leaves;
   tree->num_unique_chars = *out_count;
   tree->unique_chars = unique_chars;
 
-  // display_tree(tree);
   free(aux_operator);
 
   return tree;

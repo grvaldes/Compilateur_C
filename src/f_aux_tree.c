@@ -101,22 +101,6 @@ void initialize_leaf(TreeNode *leaf, char value, int index) {
 }
 
 
-void display_tree(SyntaxTree *tree) {
-  for (int i = 0; i < tree->num_leaves; i++) {
-    if (tree->leaves[i]) {
-      printf("Node %d:\n", i);
-      printf("  index: %d\n", tree->leaves[i]->index);
-      printf("  value: %c\n", tree->leaves[i]->value);
-      printf("  parent: %c\n", (tree->leaves[i]->parent) ? tree->leaves[i]->parent->value : ' ');
-      printf("  left_child: %c\n", (tree->leaves[i]->left_child) ? tree->leaves[i]->left_child->value : ' ');
-      printf("  right_child: %c\n\n", (tree->leaves[i]->right_child) ? tree->leaves[i]->right_child->value : ' ');
-    } else {
-      printf("Node Unknown.\n\n");
-    }
-  }
-}
-
-
 void export_node(FILE *f, TreeNode *leaf) {
     if (!leaf) return;
 
@@ -166,6 +150,8 @@ void find_unique_alphanumerics(const char* input, char* output, int* out_count) 
             output[count++] = c;
         }
     }
-    output[count] = '\0'; // Null-terminate the output string
+    output[count] = '\0';
     if (out_count) *out_count = count;
+
+    input = realloc(output, sizeof(char) * *out_count);
 }

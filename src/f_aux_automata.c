@@ -3,20 +3,7 @@
 
 #include "f_aux_automata.h"
 
-void display_nfa(Automaton *nfa) {
-  for (int i = 0; i < nfa->num_states; i++) {
-    printf("State %d:%c%c\n  out:\n    ", nfa->states[i]->index, nfa->states[i]->is_final ? 'F' : ' ',nfa->states[i]->is_start ? 'I' : ' ');
-    for (int j = 0; j < nfa->states[i]->num_transitions; j++) {
-      printf(" %d(%c)", nfa->states[i]->transitions[j]->to->index,nfa->states[i]->transitions[j]->symbol);
-    }
-    printf("\n\n");
-  }
-
-  for (int i = 0; i < nfa->num_transitions; i++) {
-    printf("Transition %d(%c):\n %d    %d\n", i, nfa->transitions[i]->symbol, nfa->transitions[i]->from->index, nfa->transitions[i]->to->index);
-    printf("\n\n");
-  }
-}
+// Fonctions automates
 
 
 void initialize_nfa(Automaton *nfa, SyntaxTree *tree) {
@@ -78,7 +65,7 @@ void add_transition_to_nfa(Automaton *automat, ATransition *transition, int coun
 }
 
 
-void add_state_to_nfa(Automaton *automat, AState *state, int counter) {
+void add_state_to_nfa(Automaton *automat, AState *state, int counter, int position) {
   automat->states[counter] = state;
 }
 
@@ -102,51 +89,7 @@ void merge_nodes_automaton(Automaton *automat) {
 }
 
 
-void reorder_indices_automaton(Automaton *nfa) {}
-
-
-void print_state(AState *state) {
-  printf("state->address : %p\n", state);
-  printf("state->index : %d\n", state->index);
-  printf("state->is_start : %d\n", state->is_start);
-  printf("state->is_final : %d\n", state->is_final);
-  printf("state->num_transitions : %d\n", state->num_transitions);
-
-  for (int i=0; i< state->num_transitions; i++) {
-    printf("state->transitions[%d] : %p\n",  i,state->transitions[i]);
-  }
-
-  printf("\n");
-}
-
-void print_transition(ATransition *transition) {
-  printf("transition->address : %p\n", transition);
-  printf("transition->symbol : %c\n", transition->symbol);
-  printf("transition->from : %d\n", transition->from->index);
-  printf("transition->to : %d\n", transition->to->index);
-
-  printf("\n");
-}
-
-
-void print_nfa(Automaton *nfa) {
-  printf("nfa->address : %p\n", nfa);
-  printf("nfa->num_states : %d\n", nfa->num_states);
-  printf("nfa->num_transitions : %d\n", nfa->num_transitions);
-
-  for (int i=0; i< nfa->num_states; i++) {
-    printf("nfa->state[%d] : %p, %p\n", i, &nfa->states[i], nfa->states[i]);
-  }
-
-  for (int i=0; i< nfa->num_transitions; i++) {
-    printf("nfa->transitions[%d] : %p, %p\n", i, &nfa->transitions[i], nfa->transitions[i]);
-  }
-
-  printf("\n");
-}
-
-
-void export_nfa_to_graphviz(const char *filename, Automaton *nfa) {
+void export_automaton_to_graphviz(const char *filename, Automaton *automat) {
     FILE* f = fopen(filename, "w");
     if (!f) {
         perror("Erreur d'ouverture de fichier.");
@@ -157,8 +100,8 @@ void export_nfa_to_graphviz(const char *filename, Automaton *nfa) {
     fprintf(f, "  rankdir=LR;\n");
     fprintf(f, "  node [shape=circle];\n");
 
-    for (int i = 0; i < nfa->num_states; ++i) {
-        AState* state = nfa->states[i];
+    for (int i = 0; i < automat->num_states; ++i) {
+        AState* state = automat->states[i];
         if (state->is_deleted) continue;
         if (state->is_final)
             fprintf(f, "  q%d [shape=doublecircle];\n", state->index);
@@ -166,8 +109,8 @@ void export_nfa_to_graphviz(const char *filename, Automaton *nfa) {
             fprintf(f, "  q%d;\n", state->index);
     }
 
-    for (int i = 0; i < nfa->num_states; ++i) {
-        AState* state = nfa->states[i];
+    for (int i = 0; i < automat->num_states; ++i) {
+        AState* state = automat->states[i];
         if (state->is_deleted) continue;
         if (state->is_start) {
             fprintf(f, "  start_q%d [shape=point];\n", state->index);
@@ -175,8 +118,8 @@ void export_nfa_to_graphviz(const char *filename, Automaton *nfa) {
         }
     }
 
-    for (int i = 0; i < nfa->num_transitions; ++i) {
-        ATransition* t = nfa->transitions[i];
+    for (int i = 0; i < automat->num_transitions; ++i) {
+        ATransition* t = automat->transitions[i];
         char label = t->symbol;
         if (label != '@') {
           fprintf(f, "  q%d -> q%d [label=\"%c\"];\n", t->from->index, t->to->index, label);
@@ -186,12 +129,6 @@ void export_nfa_to_graphviz(const char *filename, Automaton *nfa) {
     fprintf(f, "}\n");
     fclose(f);
 }
-
-
-
-
-
-
 
 
 // DFA Functions
@@ -299,6 +236,26 @@ void check_final_states(Automaton *dfa, Automaton *nfa) {
       if (nfa->states[dfa->states[i]->states_set->node_array[j]]->is_final) {
         dfa->states[i]->is_final = 1;
         break;
+      }
+    }
+  }
+
+  for (int i=0; i < dfa->num_transitions; i++) {
+    add_transition_to_state(dfa->transitions[i], dfa->transitions[i]->from);
+  }
+}
+
+
+// Fonctions DFA minimales
+void remove_states_from_set(NodeSet *original_set, NodeSet *new_set) {
+  for (int i=0; i < new_set->array_size; i++) {
+    for (int j=0; j < original_set->array_size; j++) {
+      if (new_set->node_array[i] == original_set->node_array[j]) {
+        for (int k=j; k < original_set->array_size-1; k++) {
+          original_set->node_array[k] = original_set->node_array[k+1];
+        }
+        original_set->array_size--;
+        original_set->node_array = realloc(original_set->node_array, sizeof(NodeSet) * original_set->array_size);
       }
     }
   }

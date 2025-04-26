@@ -28,7 +28,6 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
   // On modifie l'automate a avec chaque feuille de l'arbre syntaxique.
   for (int i = 0; i < tree->num_leaves; i++) {
-    // printf("Leaf %d: %c\n", i, tree->leaves[i]->value);
     switch (tree->leaves[i]->value) {
       case '.':
         {
@@ -48,11 +47,6 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
           initial_node[i] = initial_node[child_index_left];
           final_node[i] = final_node[child_index_right];
-
-          // printf("index_initial[0] = %d\n",index_initial[0]);
-          // printf("index_final[0] = %d\n",index_final[0]);
-          // printf("index_initial[1] = %d\n",index_initial[1]);
-          // printf("index_final[1] = %d\n",index_final[1]);
         }
         break;
       case '|':
@@ -87,8 +81,8 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           add_transition_to_nfa(nfa, trans2, transition_counter++);
           add_transition_to_nfa(nfa, trans3, transition_counter++);
 
-          add_state_to_nfa(nfa, state0, state_counter++);
-          add_state_to_nfa(nfa, state1, state_counter++);
+          add_state_to_nfa(nfa, state1, state_counter++, AT_END);
+          add_state_to_nfa(nfa, state0, state_counter++, AT_START);
 
           initial_node[child_index_left]->is_start = 0;
           initial_node[child_index_right]->is_start = 0;
@@ -97,11 +91,6 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
           initial_node[i] = state0;
           final_node[i] = state1;
-
-          // printf("index_initial[0] = %d\n",index_initial[0]);
-          // printf("index_final[0] = %d\n",index_final[0]);
-          // printf("index_initial[1] = %d\n",index_initial[1]);
-          // printf("index_final[1] = %d\n",index_final[1]);
         }
         break;
       case '*':
@@ -130,8 +119,8 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           add_transition_to_state(trans2, final_node[child_index]);
           add_transition_to_state(trans3, final_node[child_index]);
 
-          add_state_to_nfa(nfa, state0, state_counter++);
-          add_state_to_nfa(nfa, state1, state_counter++);
+          add_state_to_nfa(nfa, state1, state_counter++, AT_END);
+          add_state_to_nfa(nfa, state0, state_counter++, AT_START);
           
           add_transition_to_nfa(nfa, trans0, transition_counter++);
           add_transition_to_nfa(nfa, trans1, transition_counter++);
@@ -143,11 +132,6 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
 
           initial_node[i] = state0;
           final_node[i] = state1;
-
-          // printf("index_initial[0] = %d\n",index_initial[0]);
-          // printf("index_final[0] = %d\n",index_final[0]);
-          // printf("index_initial[1] = %d\n",index_initial[1]);
-          // printf("index_final[1] = %d\n",index_final[1]);
         }
         break;
       case ')':
@@ -172,24 +156,18 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           add_transition_to_state(transition0, state0);
 
           // // Ajouter les états et transitions à l'automate.
-          add_state_to_nfa(nfa, state0, state_counter++);
-          add_state_to_nfa(nfa, state1, state_counter++);
+          add_state_to_nfa(nfa, state0, state_counter++, AT_END);
+          add_state_to_nfa(nfa, state1, state_counter++, AT_END);
           add_transition_to_nfa(nfa, transition0, transition_counter++);
 
           initial_node[i] = state0;
           final_node[i] = state1;
-
-          // printf("index_initial[0] = %d\n",index_initial[0]);
-          // printf("index_final[0] = %d\n",index_final[0]);
-          // printf("index_initial[1] = %d\n",index_initial[1]);
-          // printf("index_final[1] = %d\n",index_final[1]);
         }
         break;
     }
   }
 
   merge_nodes_automaton(nfa);
-  reorder_indices_automaton(nfa);
 
   return nfa;
 }

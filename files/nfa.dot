@@ -5,8 +5,8 @@ digraph Automaton {
   q1;
   q2;
   q3;
-  q4;
   q5;
+  q4;
   q6;
   q8;
   q10;

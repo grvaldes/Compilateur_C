@@ -20,14 +20,14 @@ typedef struct SyntaxTree {
   int num_leaves;                 // Nombre de feuilles dans l'arbre
   TreeNode *root;                 // Pointeur vers la racine de l'arbre
   TreeNode **leaves;              // Tableau de pointeurs vers les feuilles (ordonnées).
-  int num_unique_chars;
-  char* unique_chars;
+  int num_unique_chars;           // Quantité de caractères uniques.
+  char* unique_chars;             // Caractères uniques de l'expression.
 } SyntaxTree;
 
 // Groupe d'états de l'automate
 typedef struct NodeSet {
-  int *node_array;
-  int array_size;
+  int *node_array;                // Liste de nodes
+  int array_size;                 // Taille de la liste
 } NodeSet;
 
 // Transitions de l'automate
@@ -52,10 +52,11 @@ typedef struct AState {
 typedef struct Automaton {
   int num_states;                 // Nombre d'états de l'automate
   int num_transitions;            // Nombre de transitions de l'automate
-  int num_unique_chars;
-  char* unique_chars;
+  int num_unique_chars;           // Quantité de caractères uniques.
+  char* unique_chars;             // Caractères uniques de l'expression.
   AState **states;                // Liste des états de l'automate
   ATransition **transitions;      // Liste des transitions de l'automate
 } Automaton;
+
 
 #endif
