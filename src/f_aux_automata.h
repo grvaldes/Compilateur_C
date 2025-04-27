@@ -7,13 +7,11 @@
 #define IS_START 1
 #define NOT_FINAL 0
 #define NOT_START 0
-#define AT_START 0
-#define AT_END 1
 
 // Fonctions Automates
 void initialize_state(AState *state, int index, int is_start, int is_final);
 void initialize_transition(ATransition *transition, AState *from, AState *to, char symbol);
-void add_transition_to_state(ATransition *transition, AState *state);
+void add_transition_to_state(ATransition *transition, AState *state_from, AState *state_to);
 void merge_nodes_automaton(Automaton *automat);
 void export_automaton_to_graphviz(const char *filename, Automaton *automat);
 
@@ -21,7 +19,7 @@ void export_automaton_to_graphviz(const char *filename, Automaton *automat);
 // Fonctions NFA
 void initialize_nfa(Automaton *nfa, SyntaxTree *tree);
 void add_transition_to_nfa(Automaton *automat, ATransition *transition, int counter);
-void add_state_to_nfa(Automaton *automat, AState* state, int counter, int position);
+void add_state_to_nfa(Automaton *automat, AState* state, int counter);
 
 
 // Fonctions DFA

@@ -5,13 +5,6 @@
 #include "aux_structs.h"
 #include "f_aux_automata.h"
 
-#define IS_FINAL 1
-#define IS_START 1
-#define NOT_FINAL 0
-#define NOT_START 0
-#define AT_START 0
-#define AT_END 1
-
 Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
   // Compteurs
   int index = 0;
@@ -39,7 +32,7 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           ATransition* trans0 = malloc(sizeof(ATransition));
 
           initialize_transition(trans0, final_node[child_index_left], initial_node[child_index_right], '@');
-          add_transition_to_state(trans0, final_node[child_index_left]);
+          add_transition_to_state(trans0, final_node[child_index_left], initial_node[child_index_right]);
           add_transition_to_nfa(nfa, trans0, transition_counter++);
 
           final_node[child_index_left]->is_final = 0;
@@ -71,18 +64,18 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           initialize_transition(trans2, final_node[child_index_left], state1, '#');
           initialize_transition(trans3, final_node[child_index_right], state1, '#');
 
-          add_transition_to_state(trans0, state0);
-          add_transition_to_state(trans1, state0);
-          add_transition_to_state(trans2, final_node[child_index_left]);
-          add_transition_to_state(trans3, final_node[child_index_right]);
+          add_transition_to_state(trans0, state0, initial_node[child_index_left]);
+          add_transition_to_state(trans1, state0, initial_node[child_index_right]);
+          add_transition_to_state(trans2, final_node[child_index_left], state1);
+          add_transition_to_state(trans3, final_node[child_index_right], state1);
 
           add_transition_to_nfa(nfa, trans0, transition_counter++);
           add_transition_to_nfa(nfa, trans1, transition_counter++);
           add_transition_to_nfa(nfa, trans2, transition_counter++);
           add_transition_to_nfa(nfa, trans3, transition_counter++);
 
-          add_state_to_nfa(nfa, state0, state_counter++, AT_START);
-          add_state_to_nfa(nfa, state1, state_counter++, AT_END);
+          add_state_to_nfa(nfa, state0, state_counter++);
+          add_state_to_nfa(nfa, state1, state_counter++);
 
           initial_node[child_index_left]->is_start = 0;
           initial_node[child_index_right]->is_start = 0;
@@ -114,13 +107,13 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           initialize_transition(trans2, final_node[child_index], initial_node[child_index], '#');
           initialize_transition(trans3, final_node[child_index], state1, '#');
 
-          add_transition_to_state(trans0, state0);
-          add_transition_to_state(trans1, state0);
-          add_transition_to_state(trans2, final_node[child_index]);
-          add_transition_to_state(trans3, final_node[child_index]);
+          add_transition_to_state(trans0, state0, initial_node[child_index]);
+          add_transition_to_state(trans1, state0, state1);
+          add_transition_to_state(trans2, final_node[child_index], initial_node[child_index]);
+          add_transition_to_state(trans3, final_node[child_index], state1);
 
-          add_state_to_nfa(nfa, state0, state_counter++, AT_START);
-          add_state_to_nfa(nfa, state1, state_counter++, AT_END);
+          add_state_to_nfa(nfa, state0, state_counter++);
+          add_state_to_nfa(nfa, state1, state_counter++);
           
           add_transition_to_nfa(nfa, trans0, transition_counter++);
           add_transition_to_nfa(nfa, trans1, transition_counter++);
@@ -153,11 +146,11 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           initialize_transition(transition0, state0, state1, tree->leaves[i]->value);
 
           // On pointe les transitions dans les états.
-          add_transition_to_state(transition0, state0);
+          add_transition_to_state(transition0, state0, state1);
 
           // // Ajouter les états et transitions à l'automate.
-          add_state_to_nfa(nfa, state0, state_counter++, AT_END);
-          add_state_to_nfa(nfa, state1, state_counter++, AT_END);
+          add_state_to_nfa(nfa, state0, state_counter++);
+          add_state_to_nfa(nfa, state1, state_counter++);
           add_transition_to_nfa(nfa, transition0, transition_counter++);
 
           initial_node[i] = state0;

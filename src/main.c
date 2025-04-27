@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG
 #define MAX_LINE_LENGTH 1024
 
 #include "f_aux_tree.h"
@@ -21,7 +20,6 @@ int main(int argc, char *argv[]) {
 
   // Ouverture du fichier
   FILE *file = fopen(argv[1], "r");
-  // FILE *file = fopen("files/expr.txt", "r");
   if (file == NULL) {
     // Vérification d'erreur d'ouverture du fichier
     fprintf(stderr, "Erreur d'ouverture du fichier.\n");
@@ -59,12 +57,14 @@ int main(int argc, char *argv[]) {
   system("dot -Tpng files/dfa.dot -o files/dfa.png");
   fprintf(stdout, "L'automate déterministe a %d états et %d transitions.\n", dfa->num_states, dfa->num_transitions);
 
-
   // Création de l'automate déterministe minimal
   Automaton *dfa_m = create_minimal_dfa(dfa);
   export_automaton_to_graphviz("files/dfa_min.dot", dfa_m);
   system("dot -Tpng files/dfa_min.dot -o files/dfa_min.png");
   fprintf(stdout, "L'automate non déterministe minimale a %d états et %d transitions.\n", dfa_m->num_states, dfa_m->num_transitions);
+
+  // Création du code C pour reconnaître le langage
+  // export_automate_code(dfa_m)
   
   fclose(file);
 

@@ -144,9 +144,15 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
 
     if (check[new_trans->from->index][letter_index] == 0 && (new_trans->from->num_transitions <= dfa_min->num_unique_chars)) {
       check[new_trans->from->index][letter_index] = 1;
-      add_transition_to_state(new_trans, new_trans->from);
+      add_transition_to_state(new_trans, new_trans->from, new_trans->to);
       add_transition_to_dfa(dfa_min, new_trans);
     }
+  }
+
+  // Check if states are reached
+  for (int i=0; i < dfa_min->num_states; i++) {
+    if (dfa_min->states[i]->num_in_trans == 0)
+      dfa_min->states[i]->is_deleted = 1;
   }
 
   return dfa_min;

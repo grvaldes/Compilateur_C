@@ -4,8 +4,6 @@
 #include "f_aux_automata.h"
 
 // Fonctions automates
-
-
 void initialize_nfa(Automaton *nfa, SyntaxTree *tree) {
   nfa->num_states = 0;
   nfa->num_transitions = 0;
@@ -44,8 +42,10 @@ void initialize_state(AState* state, int index, int is_start, int is_final) {
   state->is_final = is_final;
   state->is_deleted = 0;
   state->num_transitions = 0;
+  state->num_in_trans = 0;
   state->states_set = NULL;
   state->transitions = NULL;
+  state->in_trans = NULL;
 }
 
 void initialize_transition(ATransition *transition, AState *from, AState *to, char symbol) {
@@ -54,10 +54,14 @@ void initialize_transition(ATransition *transition, AState *from, AState *to, ch
   transition->symbol = symbol;
 }
 
-void add_transition_to_state(ATransition *transition, AState *state) {
-  state->num_transitions++;
-  state->transitions = realloc(state->transitions, sizeof(ATransition*) * state->num_transitions);
-  state->transitions[state->num_transitions - 1] = transition;
+void add_transition_to_state(ATransition *transition, AState *state_from, AState *state_to) {
+  state_from->num_transitions++;
+  state_from->transitions = realloc(state_from->transitions, sizeof(ATransition*) * state_from->num_transitions);
+  state_from->transitions[state_from->num_transitions - 1] = transition;
+
+  state_to->num_in_trans++;
+  state_to->in_trans = realloc(state_to->in_trans, sizeof(ATransition*) * state_from->num_in_trans);
+  state_to->in_trans[state_to->num_in_trans - 1] = transition;
 }
 
 void add_transition_to_nfa(Automaton *automat, ATransition *transition, int counter) {
@@ -65,7 +69,7 @@ void add_transition_to_nfa(Automaton *automat, ATransition *transition, int coun
 }
 
 
-void add_state_to_nfa(Automaton *automat, AState *state, int counter, int position) {
+void add_state_to_nfa(Automaton *automat, AState *state, int counter) {
   automat->states[counter] = state;
 }
 
@@ -256,7 +260,7 @@ void check_final_states(Automaton *dfa, Automaton *nfa) {
   }
 
   for (int i=0; i < dfa->num_transitions; i++) {
-    add_transition_to_state(dfa->transitions[i], dfa->transitions[i]->from);
+    add_transition_to_state(dfa->transitions[i], dfa->transitions[i]->from,dfa->transitions[i]->to);
   }
 }
 

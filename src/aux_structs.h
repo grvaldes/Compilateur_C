@@ -44,7 +44,9 @@ typedef struct AState {
     int is_final;                 // Indicateur d'état final
     int is_deleted;               // Indicateur d'état ignoré.
     int num_transitions;          // Nombre de transitions sortantes
+    int num_in_trans;             // Nombre de transitions sortantes
     ATransition **transitions;    // Pointeur vers les états suivantes
+    ATransition **in_trans;       // Pointeur vers les états suivantes
     NodeSet *states_set;          // Indices des états contenus
 } AState;
 
