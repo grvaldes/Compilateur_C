@@ -35,6 +35,7 @@ void add_state_to_dfa(Automaton *nfa, AState *state);
 
 int state_in_node_set(int index, NodeSet *node_set);
 int compare_node_sets(NodeSet *set1, NodeSet *set2);
+int contained_node_set(NodeSet *set1, NodeSet *set2);
 void check_final_states(Automaton *dfa, Automaton *nfa);
 
 

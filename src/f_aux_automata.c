@@ -134,7 +134,7 @@ void export_automaton_to_graphviz(const char *filename, Automaton *automat) {
 // DFA Functions
 void follow_path_from_single_state(NodeSet *node_set, AState *initial_state, char value) {
   for (int i = 0; i < initial_state->num_transitions; i++) {
-    if (initial_state->transitions[i]->symbol == '#' || initial_state->transitions[i]->symbol == value) {
+    if ((initial_state->transitions[i]->symbol == '#' && node_set->array_size > 0) || initial_state->transitions[i]->symbol == value) {
       if (!state_in_node_set(initial_state->transitions[i]->to->index, node_set)) {
         node_set->array_size++;
         node_set->node_array = realloc(node_set->node_array, sizeof(int) * (node_set->array_size));
@@ -159,7 +159,7 @@ void follow_path_from_group_state(Automaton *dfa, Automaton *nfa, AState *initia
   if (node_set->array_size == 0) return;
 
   for (int i=0; i < dfa->num_states; i++) {
-    if(compare_node_sets(dfa->states[i]->states_set, node_set)) {
+    if(contained_node_set(dfa->states[i]->states_set, node_set)) {
       ATransition *transition = malloc(sizeof(ATransition));
       initialize_transition(transition, initial_state, dfa->states[i], value);
       add_transition_to_dfa(dfa, transition);
@@ -226,6 +226,21 @@ int compare_node_sets(NodeSet *set1, NodeSet *set2) {
     }
   }
   if (count == set1->array_size) return 1;
+  else return 0;
+}
+
+
+int contained_node_set(NodeSet *set1, NodeSet *set2) {
+  int count = 0;
+  for (int i=0; i < set2->array_size; i++) {
+    for (int j=0; j < set1->array_size; j++) {
+      if (set2->node_array[i] == set1->node_array[j]) {
+        count++;
+        break;
+      }
+    }
+  }
+  if (count == set2->array_size) return 1;
   else return 0;
 }
 

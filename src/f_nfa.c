@@ -81,8 +81,8 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           add_transition_to_nfa(nfa, trans2, transition_counter++);
           add_transition_to_nfa(nfa, trans3, transition_counter++);
 
-          add_state_to_nfa(nfa, state1, state_counter++, AT_END);
           add_state_to_nfa(nfa, state0, state_counter++, AT_START);
+          add_state_to_nfa(nfa, state1, state_counter++, AT_END);
 
           initial_node[child_index_left]->is_start = 0;
           initial_node[child_index_right]->is_start = 0;
@@ -119,8 +119,8 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           add_transition_to_state(trans2, final_node[child_index]);
           add_transition_to_state(trans3, final_node[child_index]);
 
-          add_state_to_nfa(nfa, state1, state_counter++, AT_END);
           add_state_to_nfa(nfa, state0, state_counter++, AT_START);
+          add_state_to_nfa(nfa, state1, state_counter++, AT_END);
           
           add_transition_to_nfa(nfa, trans0, transition_counter++);
           add_transition_to_nfa(nfa, trans1, transition_counter++);

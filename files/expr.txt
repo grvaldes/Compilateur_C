@@ -1,11 +1,11 @@
-(a|b)*bab
-ab(ac|b)*cb
-(ab|bcc)
-ac|b
-ab(ac|b)cb
-.
 (c|b)*
 a*
+ab(ac|b)cb
+(ab|bcc)
+ab(ac|b)*cb
+(a|b)*bab
+ac|b
+.
 a(a|b)*
 ab(cc)*bd
 
