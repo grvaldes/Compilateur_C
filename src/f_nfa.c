@@ -31,6 +31,7 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           // Créer un Automaton pour l'opération de concaténation
           ATransition* trans0 = malloc(sizeof(ATransition));
 
+          // On ajoute les transitions et les états au NFA
           initialize_transition(trans0, final_node[child_index_left], initial_node[child_index_right], '@');
           add_transition_to_state(trans0, final_node[child_index_left], initial_node[child_index_right]);
           add_transition_to_nfa(nfa, trans0, transition_counter++);
@@ -38,6 +39,7 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           final_node[child_index_left]->is_final = 0;
           initial_node[child_index_right]->is_start = 0;
 
+          // On marque les états initiaux et finaux du sous-nfa.
           initial_node[i] = initial_node[child_index_left];
           final_node[i] = final_node[child_index_right];
         }
@@ -57,6 +59,7 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           ATransition *trans2 = malloc(sizeof(ATransition));
           ATransition *trans3 = malloc(sizeof(ATransition));
 
+          // On ajoute les transitions et les états au NFA
           initialize_state(state0, index++, IS_START, NOT_FINAL);
           initialize_state(state1, index++, NOT_START, IS_FINAL);
           initialize_transition(trans0, state0, initial_node[child_index_left], '#');
@@ -82,6 +85,7 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           final_node[child_index_left]->is_final = 0;
           final_node[child_index_right]->is_final = 0;
 
+          // On marque les états initiaux et finaux du sous-nfa.
           initial_node[i] = state0;
           final_node[i] = state1;
         }
@@ -100,6 +104,7 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           ATransition *trans2 = malloc(sizeof(ATransition));
           ATransition *trans3 = malloc(sizeof(ATransition));
 
+          // On ajoute les transitions et les états au NFA
           initialize_state(state0, index++, IS_START, NOT_FINAL);
           initialize_state(state1, index++, NOT_START, IS_FINAL);
           initialize_transition(trans0, state0, initial_node[child_index], '#');
@@ -123,12 +128,14 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           initial_node[child_index]->is_start = 0;
           final_node[child_index]->is_final = 0;
 
+          // On marque les états initiaux et finaux du sous-nfa.
           initial_node[i] = state0;
           final_node[i] = state1;
         }
         break;
       case ')':
         // Créer un Automaton pour l'opération de parenthèse.
+        // On marque les états initiaux et finaux du sous-nfa.
         initial_node[i] = initial_node[i-1];
         final_node[i] = final_node[i-1];
         break;
@@ -148,11 +155,12 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
           // On pointe les transitions dans les états.
           add_transition_to_state(transition0, state0, state1);
 
-          // // Ajouter les états et transitions à l'automate.
+          // Ajouter les états et transitions à l'automate.
           add_state_to_nfa(nfa, state0, state_counter++);
           add_state_to_nfa(nfa, state1, state_counter++);
           add_transition_to_nfa(nfa, transition0, transition_counter++);
 
+          // On marque les états initiaux et finaux du sous-nfa.
           initial_node[i] = state0;
           final_node[i] = state1;
         }
@@ -160,6 +168,7 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
     }
   }
 
+  // On combine les états des concatenations et elimine les états intermédiaires
   merge_nodes_automaton(nfa);
 
   return nfa;

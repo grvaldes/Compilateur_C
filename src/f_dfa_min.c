@@ -5,6 +5,7 @@
 #include "f_dfa_min.h"
 
 Automaton *create_minimal_dfa(Automaton *dfa) {
+  // On alloue et initialise la mémoire pour les objets
   NodeSet **all_sets = NULL;
   Automaton *dfa_min = malloc(sizeof(Automaton));
   NodeSet *accept_set = malloc(sizeof(NodeSet));
@@ -16,7 +17,7 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
   accept_set->node_array = NULL;
   accept_set->array_size = 0;
   
-  // 1. Find all acceptant nodes
+  // On cherche tous les états acceptantes
   for (int i=0; i < dfa->num_states; i++) {
     if (dfa->states[i]->is_final) {
       accept_set->array_size++;
@@ -29,16 +30,17 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
     }
   }
   
+  // On commence toujours avec 2 groupes (états acceptantes/non-acceptantes).
   int num_sets = 2;
   int num_initial_groups;
   all_sets = realloc(all_sets, sizeof(NodeSet*) * num_sets);
   all_sets[0] = accept_set;
   all_sets[1] = initial_set;
   
-  // While we keep adding groups
+  // On fait un boucle jusqu'à on a pas des nouvelles groupes
   do {
     num_initial_groups = num_sets;
-    // For all sets
+    // Pour chaque groupe
     for (int i=0; i < num_initial_groups; i++) {
       NodeSet *curr_set = all_sets[i];
       NodeSet *new_set = malloc(sizeof(NodeSet));
@@ -47,12 +49,13 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
 
       if (curr_set->array_size == 1) continue;
 
-      // For all states in set
+      // Pour chaque état dans le groupe
       for (int j=0; j < curr_set->array_size; j++) {
         AState* curr_state = dfa->states[curr_set->node_array[j]];
 
         int count = 0;
-        // For each letter
+        // Pour chaque lettre dans l'état
+        // On cherche s'il y a des états avec différents début et final
         for (int k=0; k < dfa->num_unique_chars; k++) {
           for (int t=0; t < curr_state->num_transitions; t++) {
             if (curr_state->transitions[t]->symbol == dfa->unique_chars[k]) {
@@ -72,6 +75,7 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
         }
       }
 
+      // On compare le nouvel groupe avec l'actuel, si différent on l'ajoute à l'automate minimal
       if (new_set->array_size > 0 && !compare_node_sets(curr_set, new_set)) {
         num_sets++;
         all_sets = realloc(all_sets, sizeof(NodeSet*) * num_sets);
@@ -82,7 +86,7 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
     }
   } while (num_sets != num_initial_groups);
 
-  // Create states from sets
+  // On prendre les groupes et on crée les états
   for (int i=0; i < num_sets; i++) {
     AState *curr_state = malloc(sizeof(AState));
     int is_start = 0;
@@ -101,13 +105,14 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
     add_state_to_dfa(dfa_min, curr_state);
   }
 
-  // Consolidate transitions
+  // On ajoute les transitions. On crée un tableau des transitions de chaque état et chaque lettre
+  // Si la transition existe, on marque le tableau positif.
   int check[dfa_min->num_states][dfa_min->num_unique_chars];
   for (int i=0; i < dfa_min->num_states; i++)
     for (int j=0; j < dfa_min->num_unique_chars; j++)
       check[i][j] = 0;
 
-
+  // On analyse toutes les transitions et on évite de les ajouter deux fois
   for (int i=0; i < dfa->num_transitions; i++) {
     AState* from = dfa->transitions[i]->from;
     AState* to = dfa->transitions[i]->to;
@@ -120,6 +125,8 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
     ATransition *new_trans = malloc(sizeof(ATransition));
     new_trans->symbol = symbol;
     
+    // On cherche la transition, si elle est nouvelle, on l'ajoute
+    // Si elle déjà existe, on ignore
     for (int j=0; j < dfa_min->num_states; j++) {
       if (found_from && found_to) break;
       if (!found_from) {
@@ -142,6 +149,7 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
       }
     }
 
+    // Si nouvelle, on ajoute
     if (check[new_trans->from->index][letter_index] == 0 && (new_trans->from->num_transitions <= dfa_min->num_unique_chars)) {
       check[new_trans->from->index][letter_index] = 1;
       add_transition_to_state(new_trans, new_trans->from, new_trans->to);
@@ -149,7 +157,7 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
     }
   }
 
-  // Check if states are reached
+  // On vérifie les états qu'ont pas des transitions entrantes et les elimines
   for (int i=0; i < dfa_min->num_states; i++) {
     if (dfa_min->states[i]->num_in_trans == 0)
       dfa_min->states[i]->is_deleted = 1;

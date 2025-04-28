@@ -2,14 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_LINE_LENGTH 1024
-
 #include "f_aux_tree.h"
 #include "f_aux_automata.h"
 #include "f_tree.h"
 #include "f_nfa.h"
 #include "f_dfa.h"
 #include "f_dfa_min.h"
+#include "f_export.h"
+
+#define MAX_LINE_LENGTH 1024
 
 int main(int argc, char *argv[]) {
   // Vérification du nombre d'arguments
@@ -64,8 +65,9 @@ int main(int argc, char *argv[]) {
   fprintf(stdout, "L'automate non déterministe minimale a %d états et %d transitions.\n", dfa_m->num_states, dfa_m->num_transitions);
 
   // Création du code C pour reconnaître le langage
-  // export_automate_code(dfa_m)
+  export_automate_code(dfa_m, expression, "out/word_parser.c");
   
+  // On ferme le fichier
   fclose(file);
 
   return 0;

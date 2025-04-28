@@ -3,7 +3,6 @@
 
 #include "aux_structs.h"
 
-// Fonctions
 SyntaxTree *create_syntax_tree(char *expression);
 
 #endif

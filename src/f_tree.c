@@ -30,6 +30,7 @@ SyntaxTree *create_syntax_tree(char *expression) {
   int leaf_index = -1;              // Index pour le tableau de noeuds
   int operator_index = -1;          // Index pour le tableau d'opérateurs
 
+  // On analyse le premier caractère de l'expression
   if (expression[0] == '(') {
     aux_operator[++operator_index] = malloc(sizeof(TreeNode));
     initialize_leaf(aux_operator[operator_index], ')', -1);
@@ -38,12 +39,16 @@ SyntaxTree *create_syntax_tree(char *expression) {
     initialize_leaf(leaves[leaf_index], expression[0], leaf_index);
   }
 
+  // On analyse chaque caractère de l'expression
   for (int i = 1; i < strlen(expression); i++) {
     char *curr_char = &expression[i];       // Caractère courant
     char *prev_char = &expression[i-1];     // Caractère précédent
 
+    // Pour le caractère actuel
     switch (*curr_char) {
       case '(':
+        // Si l'on ouvre un parenthèse, on l'ajoute à la queue des opérateurs
+        // Si le parenthèse vient après un étoile ou une lettre, on fait un concatenation implicite avant
         if (*prev_char != '|' && *prev_char != '(') {
           aux_operator[++operator_index] = malloc(sizeof(TreeNode));
           initialize_leaf(aux_operator[operator_index], '.', -1);
@@ -52,7 +57,9 @@ SyntaxTree *create_syntax_tree(char *expression) {
         initialize_leaf(aux_operator[operator_index], ')', -1);
         break;
       case ')':
+        // Si l'on ferme le parenthèse, on procese tous les opérateurs dans la queue jusqu'à on arrive au parenthèse ouvert
         while(operator_index >= 0 && aux_operator[operator_index] && aux_operator[operator_index]->value != ')') {
+          // Si l'operateur est union, on cherche dans la queue des lettres les deux dernières noeuds sans parent
           if (operator_index >= 0 && aux_operator[operator_index] && aux_operator[operator_index]->value == '|') {
             leaves[++leaf_index] = malloc(sizeof(TreeNode));
             initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
@@ -84,20 +91,24 @@ SyntaxTree *create_syntax_tree(char *expression) {
         aux_operator[operator_index--] = NULL;    
         break;
       case '|':
+        // Si le caractère est union, on l'ajout a la queue des opérateurs
         aux_operator[++operator_index] = malloc(sizeof(TreeNode));
         initialize_leaf(aux_operator[operator_index], *curr_char, -1);
         break;
       case '*':
+        // Si le caractère est l'étoile de Kleene on l'ajoute directement à l'arbre
         leaves[++leaf_index] = malloc(sizeof(TreeNode));
         initialize_leaf(leaves[leaf_index], *curr_char, leaf_index);
         leaves[leaf_index]->left_child = leaves[leaf_index-1];
         leaves[leaf_index-1]->parent = leaves[leaf_index];
 
+        // Si le caractère precedent est parenthèse et on a une concatenation dans la queue, on ajoute
         if (*prev_char == ')') {
           if (operator_index >= 0 && aux_operator[operator_index] && aux_operator[operator_index]->value == '.') {
             leaves[++leaf_index] = malloc(sizeof(TreeNode));
             initialize_leaf(leaves[leaf_index], '.', leaf_index);
 
+            // On trouve les deux dernières noeuds sans parent
             for (int j = leaf_index-1; j >= 0; j--) {
               if (leaves[j]->parent == NULL) {
                 leaves[j]->parent = leaves[leaf_index];
@@ -117,10 +128,13 @@ SyntaxTree *create_syntax_tree(char *expression) {
         } 
         break;
       default:
+        // Si le caractère est une lettre, on analyse avant le caractère precedent
+        // Si caractère est parenthèse ferme et on a des opérateurs dans la queue, on ajoute le lettre et l’opérateur a l'arbre
         if (*prev_char == ')' && operator_index >= 0) {
           leaves[++leaf_index] = malloc(sizeof(TreeNode));
           initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
 
+          // On cherche les dernières noeuds sans parent
           if (operator_index >= 0 && aux_operator[operator_index] && aux_operator[operator_index]->value != ')') {
             for (int j = leaf_index-1; j >= 0; j--) {
               if (leaves[j]->parent == NULL) {
@@ -140,9 +154,11 @@ SyntaxTree *create_syntax_tree(char *expression) {
           aux_operator[operator_index--] = NULL;
         }
 
+        // On ajoute le lettre
         leaves[++leaf_index] = malloc(sizeof(TreeNode));
         initialize_leaf(leaves[leaf_index], *curr_char, leaf_index);
 
+        // Si le caractère precedent est étoile ou lettre, on ajoute une concatenation
         if (*prev_char == '|') {}
         else if (*prev_char != '(') {
           leaves[++leaf_index] = malloc(sizeof(TreeNode));
@@ -165,6 +181,7 @@ SyntaxTree *create_syntax_tree(char *expression) {
     }
   }
 
+  // S'il reste des opérateurs après finir avec les lettres, on les ajoute.
   while (operator_index >= 0) {
     leaves[++leaf_index] = malloc(sizeof(TreeNode));
     initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
@@ -188,10 +205,12 @@ SyntaxTree *create_syntax_tree(char *expression) {
     aux_operator[operator_index--] = NULL;
   }
 
+  // On cherche les caractères uniques dans l'expression
   char *unique_chars = malloc(sizeof(char) * ASCII_SIZE);
   int *out_count = malloc(sizeof(int));
   find_unique_alphanumerics(expression, unique_chars, out_count);
   
+  // On ajoute tout a l'objet Arbre
   tree->root = leaves[nodes-1];
   tree->leaves = leaves;
   tree->num_unique_chars = *out_count;

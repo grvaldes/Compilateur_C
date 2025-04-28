@@ -10,9 +10,10 @@
 // dans l'arbre (pour l'allocation de mémoire).
 int verify_syntax_tree(char *expression) {
   int parenthesis = 0;         // Nombre de parenthèses ouvertes
-  int letter = 0;             // Nombre de lettres dans l'arbre
-  int operation = 0;         // Nombre d'opérations dans l'arbre
+  int letter = 0;              // Nombre de lettres dans l'arbre
+  int operation = 0;           // Nombre d'opérations dans l'arbre
 
+  
   // On coupe l'execution si l'expression est mal formée
   // Si non, on compte le nombre de lettre et parenthèses ouvertes
   switch (expression[0]) {
@@ -92,6 +93,8 @@ int verify_syntax_tree(char *expression) {
   return letter + operation;
 }
 
+
+// Fonction que initialise l'objet arbre.
 void initialize_leaf(TreeNode *leaf, char value, int index) {
   leaf->value = value;
   leaf->index = index;
@@ -101,26 +104,47 @@ void initialize_leaf(TreeNode *leaf, char value, int index) {
 }
 
 
+// Fonction que cherche les caractères uniques dans l'expression
+void find_unique_alphanumerics(const char* input, char* output, int* out_count) {
+    int seen[128] = {0};
+    int count = 0;
+
+    for (int i = 0; input[i] != '\0'; i++) {
+        char c = input[i];
+        if (isalnum(c) && seen[c] == 0) {
+            seen[c] = 1;
+            output[count++] = c;
+        }
+    }
+    output[count] = '\0';
+    if (out_count) *out_count = count;
+
+    input = realloc(output, sizeof(char) * *out_count);
+}
+
+
+// Fonction que écrit le node sur un fichier
 void export_node(FILE *f, TreeNode *leaf) {
     if (!leaf) return;
 
-    // Print current node
+    // Écrit le node actuel
     fprintf(f, "  node%d [label=\"%d:  %c\"];\n", leaf->index, leaf->index+1, leaf->value);
 
-    // Print left edge
+    // Écrit le feuille gauche
     if (leaf->left_child) {
         fprintf(f, "  node%d -> node%d [label=\"\"];\n", leaf->index, leaf->left_child->index);
         export_node(f, leaf->left_child);
     }
 
-    // Print right edge
+    // Écrit le feuille droite
     if (leaf->right_child) {
         fprintf(f, "  node%d -> node%d [label=\"\"];\n", leaf->index, leaf->right_child->index);
         export_node(f, leaf->right_child);
-    }
+      }
 }
 
 
+// Fonction qui écrit le fichier .dot pour la representation graphique de l'arbre
 void export_tree_to_graphviz(const char *filename, SyntaxTree *tree) {
     FILE* f = fopen(filename, "w");
     if (!f) {
@@ -139,19 +163,3 @@ void export_tree_to_graphviz(const char *filename, SyntaxTree *tree) {
 }
 
 
-void find_unique_alphanumerics(const char* input, char* output, int* out_count) {
-    int seen[128] = {0};
-    int count = 0;
-
-    for (int i = 0; input[i] != '\0'; i++) {
-        char c = input[i];
-        if (isalnum(c) && seen[c] == 0) {
-            seen[c] = 1;
-            output[count++] = c;
-        }
-    }
-    output[count] = '\0';
-    if (out_count) *out_count = count;
-
-    input = realloc(output, sizeof(char) * *out_count);
-}
