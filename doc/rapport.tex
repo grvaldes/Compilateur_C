@@ -1,0 +1,87 @@
+\documentclass[12pt]{article}
+
+
+\usepackage{bm}		
+\usepackage{float}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{amsfonts}	
+\usepackage{mathtools}
+\usepackage{subcaption}
+\usepackage[utf8]{inputenc}
+\usepackage[font=scriptsize,labelfont=bf]{caption}
+\usepackage[inner=2.5cm,outer=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}	
+
+\lstset{
+   language=C,
+   backgroundcolor=\color{white},
+   extendedchars=true,
+   basicstyle=\footnotesize\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   numbers=left,
+   numberstyle=\footnotesize,
+   numbersep=9pt,
+   tabsize=4,
+   breaklines=true,
+   showtabs=false,
+   captionpos=b,
+   frame=single,
+    %===========================================================
+    framesep=3pt,%expand outward.
+    framerule=0.4pt,%expand outward.
+    xleftmargin=3.4pt,%make the frame fits in the text area. 
+    xrightmargin=3.4pt%make the frame fits in the text area.
+    %=========================================================== 
+}
+
+\title{Projet compilation}
+\author{Gabriel VALDÉS-ALONZO}
+\date{3 mai 2025}
+
+\begin{document}
+\maketitle
+\clearpage
+
+\section{Introduction}
+\section{Structure du code}
+\subsection{Structure du projet}
+\subsection{Structure du dossier}
+Le projet est structuré de manière d'avoir une repartition logique des différents composant. La première division est au niveau des dossiers dans le projet, qui sont organisés de la manière suivante :
+\begin{verbatim}
+  Code
+  |_ build/
+  |_ doc/
+  |_ files/
+  |_ out/
+  |_ src/
+  |_ Makefile
+\end{verbatim}
+
+\noindent où les différents dossiers ont chacun sa fonction:
+
+\begin{itemize}
+  \item \texttt{build} : dossier reservé pour tous les sorties du fichier \texttt{Makefile}. Cela concerne tous les fichiers intermédiaires \texttt{.o} et aussi l'executable après la compilation.
+  \item \texttt{doc} : dossier contenant ce documentation et les fichier tex utilisés pour le générer.
+  \item \texttt{files} : dossier reservé pour les fichiers d'entré du code, particulièrement le fichier \texttt{.txt} avec l'expression régulier à analyser. 
+  \item \texttt{out} : dossier reservé pour tous les sorties du code. Dans ce projet en particulier les sorties sont les fichiers \texttt{.dot} qui représentent les différents objets du code (les automates et l'arbre syntaxique), les images générés par \textit{graphviz} et le fichier \texttt{.c} generé à partir de l'automate minimale.
+  \item \texttt{src} : dossier reservé pour le code source, c'est-à-dire tous les fichiers \texttt{.c} et \texttt{.h} avec les fonctions et codes implémentent les automates et le code de sortie.
+\end{itemize}
+
+Finalement, a la racine du projet on a simplement un fichier \texttt{Makefile}, qui est là pour simplifier la compilation du code. Le fichier peut être appellé avec la comande shell \texttt{make}. Si l'on veut refaire la compilation on peut appeler avant la commande \texttt{make clean}, commande qui appele simplement \texttt{rm -rf build}.
+
+\subsection{Structure des fichiers}
+\section{Documentation des fonctions}
+
+\subsection{Main functions}
+\subsection{aux\_structs}
+\subsection{f\_aux\_automata}
+\subsection{f\_aux\_tree}
+
+\end{document}

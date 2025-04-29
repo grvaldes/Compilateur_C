@@ -1,3 +1,4 @@
 build/*
 files/*.png
 files/*.dot
+.DS_Store
