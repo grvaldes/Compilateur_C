@@ -4,6 +4,8 @@
 #include "f_aux_automata.h"
 
 // Fonctions automates
+// Fonction que initialise l'objet NFA
+// En fonction des opérations elle compte combien d'états et transitions on a besoin et alloue la mémoire
 void initialize_nfa(Automaton *nfa, SyntaxTree *tree) {
   nfa->num_states = 0;
   nfa->num_transitions = 0;
@@ -36,6 +38,7 @@ void initialize_nfa(Automaton *nfa, SyntaxTree *tree) {
   nfa->transitions = malloc(sizeof(ATransition*) * nfa->num_transitions);
 }
 
+// Initialise un objet état
 void initialize_state(AState* state, int index, int is_start, int is_final) {
   state->index = index;
   state->is_start = is_start;
@@ -48,12 +51,14 @@ void initialize_state(AState* state, int index, int is_start, int is_final) {
   state->in_trans = NULL;
 }
 
+// Initialise un objet transition
 void initialize_transition(ATransition *transition, AState *from, AState *to, char symbol) {
   transition->from = from;
   transition->to = to;
   transition->symbol = symbol;
 }
 
+// Ajoute la transition aux états concernées
 void add_transition_to_state(ATransition *transition, AState *state_from, AState *state_to) {
   state_from->num_transitions++;
   state_from->transitions = realloc(state_from->transitions, sizeof(ATransition*) * state_from->num_transitions);
@@ -64,16 +69,19 @@ void add_transition_to_state(ATransition *transition, AState *state_from, AState
   state_to->in_trans[state_to->num_in_trans - 1] = transition;
 }
 
+// Ajoute la transition à l'automate
 void add_transition_to_nfa(Automaton *automat, ATransition *transition, int counter) {
   automat->transitions[counter] = transition;
 }
 
-
+// Ajoute l'état à l'automate
 void add_state_to_nfa(Automaton *automat, AState *state, int counter) {
   automat->states[counter] = state;
 }
 
-
+// Combine les états de l'automate
+// Si on a une concatenation on utilise un état intermédiaire pour faire la conection. Cette fonction cherche ces états
+// et les marque comme supprimés.
 void merge_nodes_automaton(Automaton *automat) {
   for (int i=0; i < automat->num_transitions; i++) {
     if (automat->transitions[i]->symbol == '@') {
@@ -92,7 +100,7 @@ void merge_nodes_automaton(Automaton *automat) {
   }
 }
 
-
+// Fonction qui exporte l'automat en format dot
 void export_automaton_to_graphviz(const char *filename, Automaton *automat) {
     FILE* f = fopen(filename, "w");
     if (!f) {
@@ -104,6 +112,7 @@ void export_automaton_to_graphviz(const char *filename, Automaton *automat) {
     fprintf(f, "  rankdir=LR;\n");
     fprintf(f, "  node [shape=circle];\n");
 
+    // Écrit les états finaux avec double circle et les autres normalement
     for (int i = 0; i < automat->num_states; ++i) {
         AState* state = automat->states[i];
         if (state->is_deleted) continue;
@@ -113,6 +122,7 @@ void export_automaton_to_graphviz(const char *filename, Automaton *automat) {
             fprintf(f, "  q%d;\n", state->index);
     }
 
+    // Écrit les états de départ et la transition vide initiale
     for (int i = 0; i < automat->num_states; ++i) {
         AState* state = automat->states[i];
         if (state->is_deleted) continue;
@@ -122,6 +132,7 @@ void export_automaton_to_graphviz(const char *filename, Automaton *automat) {
         }
     }
 
+    // Ajoute le reste des fleches
     for (int i = 0; i < automat->num_transitions; ++i) {
         ATransition* t = automat->transitions[i];
         char label = t->symbol;
@@ -135,10 +146,13 @@ void export_automaton_to_graphviz(const char *filename, Automaton *automat) {
 }
 
 
-// DFA Functions
+// Fonctions pour les DFA
+// Fonction qui suit le chemin d'un état initial jusqu'à l'état final avec une valeur donnée
 void follow_path_from_single_state(NodeSet *node_set, AState *initial_state, char value) {
   for (int i = 0; i < initial_state->num_transitions; i++) {
+    // Si la transition est la valeur cheerchée ou une epsilon transition pas initial
     if ((initial_state->transitions[i]->symbol == '#' && node_set->array_size > 0) || initial_state->transitions[i]->symbol == value) {
+      // Si la transition n'est pas déjà dans le set on la ajoute
       if (!state_in_node_set(initial_state->transitions[i]->to->index, node_set)) {
         node_set->array_size++;
         node_set->node_array = realloc(node_set->node_array, sizeof(int) * (node_set->array_size));
@@ -149,19 +163,21 @@ void follow_path_from_single_state(NodeSet *node_set, AState *initial_state, cha
   }
 }
 
-
+// Fonction qui suit le chemin à partir de tous les états d'un groupe
 void follow_path_from_group_state(Automaton *dfa, Automaton *nfa, AState *initial_state, char value) {
   NodeSet *node_set = malloc(sizeof(NodeSet));
   node_set->array_size = 0;
   node_set->node_array = NULL;
 
-
+  // Cherche par état
   for (int i=0; i < initial_state->states_set->array_size; i++) {
     follow_path_from_single_state(node_set, nfa->states[initial_state->states_set->node_array[i]], value);
   }
 
+  // S'il y a rien, on fait rien
   if (node_set->array_size == 0) return;
 
+  // Si le group existe ou est contenu dans un autre groupe, on ajoute une transition
   for (int i=0; i < dfa->num_states; i++) {
     if(contained_node_set(dfa->states[i]->states_set, node_set)) {
       ATransition *transition = malloc(sizeof(ATransition));
@@ -171,6 +187,7 @@ void follow_path_from_group_state(Automaton *dfa, Automaton *nfa, AState *initia
     } 
   }
 
+  // Si le groupe n'existe pas, on le crée et ajoute la transition
   AState* new_state = malloc(sizeof(AState));
   ATransition *transition = malloc(sizeof(ATransition));
   initialize_transition(transition, initial_state, new_state, value);
@@ -179,7 +196,7 @@ void follow_path_from_group_state(Automaton *dfa, Automaton *nfa, AState *initia
   add_transition_to_dfa(dfa, transition);
 }
 
-
+// Fonction qui initialise le DFA
 void initialize_dfa(Automaton *dfa, Automaton *nfa) {
   dfa->num_states = 0;
   dfa->num_transitions = 0;
@@ -189,26 +206,27 @@ void initialize_dfa(Automaton *dfa, Automaton *nfa) {
   dfa->transitions = NULL;
 }
 
-
+// Fonction qui ajoute un état au DFA
 void add_state_to_dfa(Automaton *automat, AState *state) {
   automat->num_states++;
   automat->states = realloc(automat->states, sizeof(AState*) * automat->num_states);
   automat->states[automat->num_states-1] = state;
 }
 
+// Fonction qui ajoute une transition au DFA
 void add_transition_to_dfa(Automaton *automat, ATransition *transition) {
   automat->num_transitions++;
   automat->transitions = realloc(automat->transitions, sizeof(ATransition*) * automat->num_transitions);
   automat->transitions[automat->num_transitions-1] = transition;
 }
 
-
+// Fonction qui initialise un état du DFA
 void initialize_dfa_state(AState *state, int index, int is_start, int is_final, NodeSet *node_set) {
   initialize_state(state, index, is_start, is_final);
   state->states_set = node_set;
 }
 
-
+// Verifie que l'état est dans le groupe
 int state_in_node_set(int index, NodeSet *node_set) {
   if(!node_set->node_array) return 0;
   for (int i=0; i < node_set->array_size; i++) {
@@ -217,7 +235,7 @@ int state_in_node_set(int index, NodeSet *node_set) {
   return 0;
 }
 
-
+// Compare si deux groupes sont égaux
 int compare_node_sets(NodeSet *set1, NodeSet *set2) {
   if (set1->array_size != set2->array_size) return 0;
   int count = 0;
@@ -233,7 +251,7 @@ int compare_node_sets(NodeSet *set1, NodeSet *set2) {
   else return 0;
 }
 
-
+// Verifie si un groupe est contenu dans un autre
 int contained_node_set(NodeSet *set1, NodeSet *set2) {
   int count = 0;
   for (int i=0; i < set2->array_size; i++) {
@@ -248,7 +266,7 @@ int contained_node_set(NodeSet *set1, NodeSet *set2) {
   else return 0;
 }
 
-
+// Fonction qui cherche tous les états finaux
 void check_final_states(Automaton *dfa, Automaton *nfa) {
   for (int i=0; i < dfa->num_states; i++) {
     for (int j=0; j < dfa->states[i]->states_set->array_size; j++) {
@@ -266,6 +284,7 @@ void check_final_states(Automaton *dfa, Automaton *nfa) {
 
 
 // Fonctions DFA minimales
+// Fonction qui supprime les états du groupe original
 void remove_states_from_set(NodeSet *original_set, NodeSet *new_set) {
   for (int i=0; i < new_set->array_size; i++) {
     for (int j=0; j < original_set->array_size; j++) {

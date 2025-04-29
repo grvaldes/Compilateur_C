@@ -8,12 +8,14 @@
 #define ASCII_START 48
 
 void export_automate_code(Automaton *dfa, const char *expression, const char *filename) {
+  // On crée le fichier de sortie pour le code C
   FILE* f = fopen(filename, "w");
   if (!f) {
     perror("Erreur d'ouverture de fichier.");
     return;
   }
 
+  // On a besoin de l'état de départ (pas necessairement le premier état de la liste)
   int start_index;
 
   for (int i=0; i < dfa->num_states; i++) {
@@ -23,6 +25,7 @@ void export_automate_code(Automaton *dfa, const char *expression, const char *fi
     }
   }
 
+  // On crée un groupe d'états finaux pour vérifier le final du mot
   NodeSet end_set;
   end_set.array_size = 0;
   end_set.node_array = NULL;
@@ -36,12 +39,14 @@ void export_automate_code(Automaton *dfa, const char *expression, const char *fi
     }
   }
 
+  // On exporte le code
   fprintf(f, "#include <stdio.h>\n");
   fprintf(f, "#include <stdlib.h>\n");
   fprintf(f, "#include <string.h>\n\n");
   fprintf(f, "int main(int argc, char *argv[]) {\n");
   fprintf(f, "\tint trans[%d][%d];\n", dfa->num_states, ASCII_CHARS);
 
+  // Boucle pour écrire les états finaux
   fprintf(f, "\tint end_set[%d] = { ", end_set.array_size);
   fprintf(f, "%d", end_set.node_array[0]);
   for (int i=1; i < end_set.array_size; i++) {
@@ -58,6 +63,7 @@ void export_automate_code(Automaton *dfa, const char *expression, const char *fi
   fprintf(f, "\t\tfor (int j=0; j < %d; j++)\n", ASCII_CHARS);
   fprintf(f, "\t\t\ttrans[i][j] = -1;\n\n");
 
+  // Boucle pour écrire les transitions, tout le reste est -1 (transition non existant)
   for (int i=0; i < dfa->num_transitions; i++) {
     int from = dfa->transitions[i]->from->index;
     int to = dfa->transitions[i]->to->index;
@@ -66,6 +72,8 @@ void export_automate_code(Automaton *dfa, const char *expression, const char *fi
     fprintf(f, "\ttrans[%d][%d] = %d;\n", from, symbol-ASCII_START, to);
   }
 
+  // Reste du code, verifie que chaque lettre est dans le tableau de transition
+  // Donne sortie positive ou négative si le mot et accepté ou pas
   fprintf(f, "\t\n");
   fprintf(f, "\tprintf(\"Ecrivez-vous le mot a reconnaitre: \\n\");\n");
   fprintf(f, "\tscanf(\"%%s\", input_word);\n");
