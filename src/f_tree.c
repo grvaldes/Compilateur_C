@@ -60,7 +60,8 @@ SyntaxTree *create_syntax_tree(char *expression) {
         // Si l'on ferme le parenthèse, on procese tous les opérateurs dans la queue jusqu'à on arrive au parenthèse ouvert
         while(operator_index >= 0 && aux_operator[operator_index] && aux_operator[operator_index]->value != ')') {
           // Si l'operateur est union, on cherche dans la queue des lettres les deux dernières noeuds sans parent
-          if (operator_index >= 0 && aux_operator[operator_index] && aux_operator[operator_index]->value == '|') {
+          if (operator_index >= 0 && aux_operator[operator_index] && 
+              (aux_operator[operator_index]->value == '|' || aux_operator[operator_index]->value == '.')) {
             leaves[++leaf_index] = malloc(sizeof(TreeNode));
             initialize_leaf(leaves[leaf_index], aux_operator[operator_index]->value, leaf_index);
             for (int j = leaf_index-1; j >= 0; j--) {

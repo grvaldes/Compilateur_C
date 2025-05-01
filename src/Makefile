@@ -1,9 +1,10 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -O2 -g
+CFLAGS = -g
 
 # Directories
 SRC_DIR = .
+OUT_DIR = ../out
 BUILD_DIR = ../build
 
 # Source and object files
@@ -30,6 +31,7 @@ $(BUILD_DIR):
 
 # Clean build files
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)/*
+	rm -rf $(OUT_DIR)/*
 
 .PHONY: all clean
