@@ -59,7 +59,7 @@ Automaton *create_minimal_dfa(Automaton *dfa) {
         for (int k=0; k < dfa->num_unique_chars; k++) {
           for (int t=0; t < curr_state->num_transitions; t++) {
             if (curr_state->transitions[t]->symbol == dfa->unique_chars[k]) {
-              if (state_in_node_set(curr_state->transitions[t]->to->index, curr_set)) {
+              if (is_state_in_node_set(curr_state->transitions[t]->to->index, curr_set)) {
                 count++;
               }
             }

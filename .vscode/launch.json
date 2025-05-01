@@ -1,34 +1,10 @@
 {
   "configurations": [
-    {
-      "name": "(gdb) Launch parser",
-      "type": "cppdbg",
-      "request": "launch",
-      "program": "${workspaceFolder}/out/test",
-      "args": [],
-      "stopAtEntry": false,
-      "cwd": "${fileDirname}",
-      "environment": [],
-      "externalConsole": false,
-      "MIMode": "gdb",
-      "setupCommands": [
-          {
-              "description": "Enable pretty-printing for gdb",
-              "text": "-enable-pretty-printing",
-              "ignoreFailures": true
-          },
-          {
-              "description": "Set Disassembly Flavor to Intel",
-              "text": "-gdb-set disassembly-flavor intel",
-              "ignoreFailures": true
-          }
-      ]
-    },
   {
     "name": "(gdb) Launch test",
     "type": "cppdbg",
     "request": "launch",
-    "program": "${workspaceFolder}/test",
+    "program": "${workspaceFolder}/build/regex_parser",
     "args": ["${workspaceFolder}/files/expr.txt"],
     "stopAtEntry": false,
     "cwd": "${fileDirname}",

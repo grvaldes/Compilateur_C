@@ -169,7 +169,7 @@ Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree) {
   }
 
   // On combine les états des concatenations et elimine les états intermédiaires
-  merge_nodes_automaton(nfa);
+  merge_states_automaton(nfa);
 
   return nfa;
 }

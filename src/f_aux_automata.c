@@ -82,7 +82,7 @@ void add_state_to_nfa(Automaton *automat, AState *state, int counter) {
 // Combine les états de l'automate
 // Si on a une concatenation on utilise un état intermédiaire pour faire la conection. Cette fonction cherche ces états
 // et les marque comme supprimés.
-void merge_nodes_automaton(Automaton *automat) {
+void merge_states_automaton(Automaton *automat) {
   for (int i=0; i < automat->num_transitions; i++) {
     if (automat->transitions[i]->symbol == '@') {
       AState* node_to_delete = automat->transitions[i]->from;
@@ -150,10 +150,10 @@ void export_automaton_to_graphviz(const char *filename, Automaton *automat) {
 // Fonction qui suit le chemin d'un état initial jusqu'à l'état final avec une valeur donnée
 void follow_path_from_single_state(NodeSet *node_set, AState *initial_state, char value) {
   for (int i = 0; i < initial_state->num_transitions; i++) {
-    // Si la transition est la valeur cheerchée ou une epsilon transition pas initial
+    // Si la transition est la valeur cherchée ou une epsilon transition pas initial
     if ((initial_state->transitions[i]->symbol == '#' && node_set->array_size > 0) || initial_state->transitions[i]->symbol == value) {
       // Si la transition n'est pas déjà dans le set on la ajoute
-      if (!state_in_node_set(initial_state->transitions[i]->to->index, node_set)) {
+      if (!is_state_in_node_set(initial_state->transitions[i]->to->index, node_set)) {
         node_set->array_size++;
         node_set->node_array = realloc(node_set->node_array, sizeof(int) * (node_set->array_size));
         node_set->node_array[node_set->array_size-1] = initial_state->transitions[i]->to->index;
@@ -227,7 +227,7 @@ void initialize_dfa_state(AState *state, int index, int is_start, int is_final, 
 }
 
 // Verifie que l'état est dans le groupe
-int state_in_node_set(int index, NodeSet *node_set) {
+int is_state_in_node_set(int index, NodeSet *node_set) {
   if(!node_set->node_array) return 0;
   for (int i=0; i < node_set->array_size; i++) {
     if (index == node_set->node_array[i]) return 1;

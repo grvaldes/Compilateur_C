@@ -16,11 +16,16 @@
 \usepackage{subcaption}
 \usepackage[utf8]{inputenc}
 \usepackage[font=scriptsize,labelfont=bf]{caption}
-\usepackage[inner=2.5cm,outer=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}	
+\usepackage[inner=2.2cm,outer=2.2cm,top=2.5cm,bottom=2.3cm]{geometry}	
 
 \lstset{
+   classoffset=0,
    language=C,
    backgroundcolor=\color{white},
+   commentstyle=\color[rgb]{0,.7,0},
+   keywordstyle=\color{blue},
+   numberstyle=\tiny\color{gray},
+   stringstyle=\color[rgb]{0.5,0,0.5},
    extendedchars=true,
    basicstyle=\footnotesize\ttfamily,
    showstringspaces=false,
@@ -37,8 +42,11 @@
     framesep=3pt,%expand outward.
     framerule=0.4pt,%expand outward.
     xleftmargin=3.4pt,%make the frame fits in the text area. 
-    xrightmargin=3.4pt%make the frame fits in the text area.
+    xrightmargin=3.4pt,%make the frame fits in the text area.
     %=========================================================== 
+   classoffset=1,
+   morekeywords={SyntaxTree, Automaton, TreeNode, FILE, NodeSet, AState, ATransition},keywordstyle=\color[rgb]{0.7,0,0.7},
+   classoffset=0
 }
 
 \title{Projet compilation}
@@ -47,13 +55,18 @@
 
 \begin{document}
 \maketitle
+\thispagestyle{empty}
 \clearpage
-
+\setcounter{page}{1}
 \section{Introduction}
+Ce projet consiste en la création d'un compilateur écrit en langage C, conçu pour traiter des expressions régulières et générer un programme capable de vérifier si des mots appartiennent au langage défini par ces expressions. On implemente ce projet en étapes: on crée un arbre syntaxique associé à l'expression. Cet arbre est utilisé pour construire un automate non déterministe (NFA), qui est ensuite converti en un automate déterministe (DFA). Le DFA est ensuite minimisé pour obtenir un automate minimal unique qui génère un fichier C contenant un programme qui peut être compilé séparément. Ce programme permet de vérifier si un mot donné appartient au langage défini par l'expression régulière initiale ou pas. 
+
 \section{Structure du code}
+Dans cette section on parle de la structure du code, en partant pour parler de comme le projet est organisé au niveau de la conception jusqu'à au niveau des fonctions et philosophie.
 \subsection{Structure du projet}
-\subsection{Structure du dossier}
-Le projet est structuré de manière d'avoir une repartition logique des différents composant. La première division est au niveau des dossiers dans le projet, qui sont organisés de la manière suivante :
+Le code pour le compilateur est écrit en C. On suivre un structure traditionnel avec un fonction \texttt{main} comme point de départ et des fonctions pour améliorer la compréhension. De cette manière, on utilise des fichiers \texttt{.c} pour écrire le code, et des fichier \texttt{.h} pour déclarer les fonctions et ajouter les librairies nécessaires.
+
+Le répertoire du projet est structuré de manière d'avoir une repartition logique des différents composant. La première division est au niveau des répertoires dans le projet, qui sont organisés de la manière suivante :
 \begin{verbatim}
   Code
   |_ build/
@@ -61,27 +74,348 @@ Le projet est structuré de manière d'avoir une repartition logique des différ
   |_ files/
   |_ out/
   |_ src/
-  |_ Makefile
 \end{verbatim}
 
-\noindent où les différents dossiers ont chacun sa fonction:
+\noindent où les différents répertoires ont chacun sa fonction:
 
 \begin{itemize}
-  \item \texttt{build} : dossier reservé pour tous les sorties du fichier \texttt{Makefile}. Cela concerne tous les fichiers intermédiaires \texttt{.o} et aussi l'executable après la compilation.
-  \item \texttt{doc} : dossier contenant ce documentation et les fichier tex utilisés pour le générer.
-  \item \texttt{files} : dossier reservé pour les fichiers d'entré du code, particulièrement le fichier \texttt{.txt} avec l'expression régulier à analyser. 
-  \item \texttt{out} : dossier reservé pour tous les sorties du code. Dans ce projet en particulier les sorties sont les fichiers \texttt{.dot} qui représentent les différents objets du code (les automates et l'arbre syntaxique), les images générés par \textit{graphviz} et le fichier \texttt{.c} generé à partir de l'automate minimale.
-  \item \texttt{src} : dossier reservé pour le code source, c'est-à-dire tous les fichiers \texttt{.c} et \texttt{.h} avec les fonctions et codes implémentent les automates et le code de sortie.
+  \item \texttt{build} : répertoire reservé pour tous les sorties du fichier \texttt{Makefile}. Cela concerne tous les fichiers intermédiaires \texttt{.o} et aussi l'executable après la compilation.
+  \item \texttt{doc} : répertoire contenant ce documentation et les fichier tex utilisés pour le générer.
+  \item \texttt{files} : répertoire reservé pour les fichiers d'entré du code, particulièrement le fichier \texttt{.txt} avec l'expression régulier à analyser. 
+  \item \texttt{out} : répertoire reservé pour tous les sorties du code. Dans ce projet en particulier les sorties sont les fichiers \texttt{.dot} qui représentent les différents objets du code (les automates et l'arbre syntaxique), les images générés par \textit{graphviz} et le fichier \texttt{.c} generé à partir de l'automate minimale.
+  \item \texttt{src} : répertoire reservé pour le code source, c'est-à-dire tous les fichiers \texttt{.c} et \texttt{.h} avec les fonctions et codes implémentent les automates et le code de sortie.
 \end{itemize}
 
-Finalement, a la racine du projet on a simplement un fichier \texttt{Makefile}, qui est là pour simplifier la compilation du code. Le fichier peut être appellé avec la comande shell \texttt{make}. Si l'on veut refaire la compilation on peut appeler avant la commande \texttt{make clean}, commande qui appele simplement \texttt{rm -rf build}.
+Finalement, dans le répertoire \texttt{src} on a un fichier \texttt{Makefile}, qui est là pour simplifier la compilation du code. Le fichier peut être appelé avec la comande shell \texttt{make}. Si l'on veut refaire la compilation on peut appeler avant la commande \texttt{make clean}, commande qui appelle simplement \texttt{rm -rf ../build}.
 
 \subsection{Structure des fichiers}
+Le point d'entrée du code est la fonction \texttt{src/main.c}, qui reçoit des arguments et délègue aux autres fonctions. Comme l'algorithme commence avec un arbre syntaxique, suivi des différents automates avant d'exporter le programme de sortie, on divise les fonctions par sujet :
+
+\begin{itemize}
+  \item \texttt{src/main.c} : Code principal. Cette fonction appelle les autres fonctions dans cette liste.
+  \item \texttt{src/f\_tree.c} : Algorithme pour créer l'arbre syntaxique. La fonction utilise un algorithme où on lit l'expression régulière de gauche à droite, lettre par lettre et ajoute les feuilles de l'arbre avec les opérations nécessaires. Elle utilise des fonctions auxiliaires définies dans \texttt{f\_aux\_tree.c}.
+  \item \texttt{src/f\_nfa.c} : Algorithme que prendre l'arbre syntaxique et génère le NFA. Par chaque feuille de l'arbre el crée une sous-automate qui est combiné selon les opérations correspondents. Elle utilise les fonctions auxiliares définies dans \texttt{f\_aux\_automata.c}.
+  \item \texttt{src/f\_dfa.c} : Algorithme que crée l'automate déterministe à partir de le NFA. Elle utilise les fonctions auxiliares définies dans \texttt{f\_aux\_automata.c} pour faire le parcours du NFA et obtenir les groupes d'etats combinés.
+  \item \texttt{src/f\_dfa\_min.c} : Algorithme que minimise le DFA et obtient l'automate minimal unique. Les fonctions auxiliaires sont définis dans \texttt{f\_aux\_automata.c}.
+  \item \texttt{src/f\_export.c} : Fonction que prendre l'automate minimal et exporte un fichier \texttt{.c} de sortie qui peut être compilé séparément. Cette programme peut prendre un mot et vérifier s'il appartient au langage défini par l'expression régulière initiale.
+  \item \texttt{src/f\_aux\_*} : Fonctions auxiliaires. Les fonctions sont détailles dans les sections \ref{sec:auxs_auto} et \ref{sec:auxs_tree}.
+  \item \texttt{src/aux\_structs.h} : Fichier où on déclare les structures qui définissent les objets à utiliser, détaillé dans la section \ref{sec:structs}.
+\end{itemize}
+
 \section{Documentation des fonctions}
+Dans cette section on détaille les fonctions utilisés et l'action qu'elles font dans le programme. Les noms des fonctions (en anglais) sont descriptifs de l'action qu'elles exécutent, donc il n'est pas nécessaire de faire un explication très détaille, sauf s'il y a un algorithme utilisé. De toute façon, le code a des commentaires pour donner de contexte au code et d'expliquer les fonctionnalités basiques des algorithmes. 
+
+\subsection{aux\_structs}
+\label{sec:structs}
+Le code est organisé autour des objets pour simplifier les relations entre les différents parties. Comme le langage C est pas orienté aux objets, on utilise des \texttt{structs} pour avoir les fonctionnalités d'encapsulation de données. Comme ces objets sont pas définies de la même manière que dans autres langages comme C++, il faut être attentif à l'allocation de mémoire et l'utilisation des pointeurs. Les objets utilisés sont:
+
+\subsubsection*{Arbre syntaxique et ses feuilles}
+L'arbre syntaxique est le première objet, que facilite l'encapsulation des variables associés à l'arbre. Le code du \texttt{struct} est
+
+\begin{lstlisting}
+  typedef struct SyntaxTree {
+    int num_leaves;            // Nombre de feuilles dans l'arbre
+    TreeNode *root;            // Pointeur vers la racine de l'arbre
+    TreeNode **leaves;         // Tableau de pointeurs vers les feuilles.
+    int num_unique_chars;      // Quantite de caracteres uniques.
+    char* unique_chars;        // Caracteres uniques de l'expression.
+    } SyntaxTree;
+  \end{lstlisting}
+
+  \noindent où on utilise un système récursif pour les feuilles. On garde un pointeur vers la racine, la quantité des feuilles, un tableau de pointeurs vers toutes les feuilles et des infos sur les caractères dans l'expression régulière. Chaque feuilles est aussi un objet : 
+
+  \begin{lstlisting}
+  typedef struct TreeNode {
+    char value;                     // Caractere de l'arbre
+    int index;                      // Index du noeud dans l'arbre
+    struct TreeNode *parent;        // Pointeur vers le parent
+    struct TreeNode *left_child;    // Pointeur vers le fils gauche
+    struct TreeNode *right_child;   // Pointeur vers fils droite ou NULL
+  } TreeNode;
+  \end{lstlisting}
+
+  \noindent où on garde la valeur, l'indice de la feuille et des pointeurs vers le père et les enfants.
+  
+  \subsubsection*{Automates et ses parts}
+  Logiquement, c'est aussi avantageux de garder l'automate dans une structure de données fixe. L'automate est définie comme un \texttt{struct} de la manière suivante :
+  \begin{lstlisting}
+  typedef struct Automaton {
+    int num_states;            // Nombre d'etats de l'automate
+    int num_transitions;       // Nombre de transitions de l'automate
+    int num_unique_chars;      // Quantite de caracteres uniques.
+    char* unique_chars;        // Caracteres uniques de l'expression.
+    AState **states;           // Liste des etats de l'automate
+    ATransition **transitions; // Liste des transitions de l'automate
+  } Automaton;
+  \end{lstlisting}
+
+  \noindent où on garde la quantité d'états et transitions, la quantité des caractères uniques et les caractères, et aussi un tableau des états et transitions. Les états et transitions sont aussi des objets définies comme
+
+  \begin{lstlisting}
+  typedef struct AState {
+      int index;                    // Indice de l'etat
+      int is_start;                 // Indicateur d'etat de depart
+      int is_final;                 // Indicateur d'etat final
+      int is_deleted;               // Indicateur d'etat ignore.
+      int num_transitions;          // Nombre de transitions sortantes
+      int num_in_trans;             // Nombre de transitions sortantes
+      ATransition **transitions;    // Pointeur vers les etats suivantes
+      ATransition **in_trans;       // Pointeur vers les etats suivantes
+      NodeSet *states_set;          // Indices des etats contenus
+  } AState;
+  \end{lstlisting}
+  \begin{lstlisting}
+  typedef struct ATransition {
+    char symbol;                    // Symbole de la transition
+    struct AState *from;            // Etat de depart de la transition
+    struct AState *to;              // Etat d'arrivee de la transition
+  } ATransition;
+  \end{lstlisting}
+
+  \noindent où pour l'état on garde l'indice, des variables boolean pour identifier si sont des états initiaux, finaux ou supprimés (C n'a pas de boolean natif, donc on utilise un \texttt{int}), la quantité des transitions entrantes et sortantes, des tableaux des pointeurs vers ces transitions et un set d'états, réservé pour aider dans l'algorithme des automates déterministes. Le set d'états est défini comme
+
+\begin{lstlisting}
+typedef struct NodeSet {
+  int *node_array;                // Liste de nodes
+  int array_size;                 // Taille de la liste
+} NodeSet;
+\end{lstlisting}
+
+\noindent où on garde simplement la taille du set et les indices des états concernés.
 
 \subsection{Main functions}
-\subsection{aux\_structs}
+
+\begin{itemize}
+  \item \lstinline|SyntaxTree *create_syntax_tree(char *expression)| : \\
+  Fonction qui crée un arbre syntaxique à partir d'une expression régulière. La fonction lit l'expression de gauche à droite et ajoute les feuilles à l'arbre en considérant les opérations correspondents. L'algorithme est décrit ci-dessous.
+
+  \begin{lstlisting}
+    var: pile de feuilles de l arbre
+    var: pile auxiliaires des operateurs
+
+    for (chaque caractere dans l expression)
+    | if (caractere == '(')
+    | | if (caractere precedent == lettre|'*'|')')
+    | | | ajouter concatenation a la pile operateur;
+    | | ajouter parenthese a la pile feuille;
+    | if (caractere == ')')
+    | | on depile les operateurs jusqu a fermer parenthese;
+    | if (caractere == '|')
+    | | on ajoute disjonction a la pile operateur;
+    | if (caractere == '*')
+    | | on ajoute l etoile a la pile feuille;
+    | | si la pile a concatenation, on bouge vers les feuilles;
+    | if (caractere == lettre)
+    | | if (caractere precedent == ')')
+    | | | on depile dernier operateur (concat ou union);
+    | | on ajoute la lettre;
+    | | if (caractere precedent == '*'|lettre)
+    | | | on ajoute concatenation a l arbre
+    
+    if (il reste des elements dans pile operateur)
+    | on processe l operateur;
+    | on ajoute operateur a l arbre;
+
+    return arbre;
+  \end{lstlisting}
+
+  \item \lstinline|Automaton *create_nfa_from_syntax_tree(SyntaxTree *tree)| : \\
+  Crée l'automat non déterministe à partir de l'arbre. Elle prendre chaque feuille et l'ajoute comme un sous-automate, qui est combiné avec les autres. L'algorithme est : 
+
+  \begin{lstlisting}
+    entre : etat initial sous-automate
+    entre : etat final sous-automate
+
+    for (chaque feuille de l arbre)
+    | if (feuille == ')')
+    | | continue;
+    | if (feuille == '.')
+    | | on cree transition vide entre etat initial 2 et final 1;
+    | | on ajoute transitions et etats au nfa;
+    | | on ajoute transitions aux etats;
+    | if (feuille == '|')
+    | | on cree deux etats;
+    | | on cree 4 transitions vides;
+    | | on ajoute transitions et etats au nfa;
+    | | on ajoute transitions aux etats;
+    | if (feuille == '*')
+    | | on cree deux etats;
+    | | on cree 4 transitions vides;
+    | | on ajoute transitions et etats au nfa;
+    | | on ajoute transitions aux etats;
+    | if (feuille == lettre)
+    | | on cree deux etats;
+    | | on cree une transition avec la lettre;
+    | | on ajoute transitions et etats au nfa;
+    | | on ajoute transitions aux etats;
+  \end{lstlisting}
+
+  
+  \item \lstinline|Automaton *create_dfa_from_nfa(Automaton *nfa)| : \\
+  Fonction qui prend un automate non déterministe et crée un automate déterministe associé en regroupant des états. L'algorithme est :
+
+  \begin{lstlisting}
+    on cherche etat de debut;
+    on cherche epsilon-cloture;
+
+    do
+    | for (chaque etat)
+    | | for (chaque lettre)
+    | | on cherche tous les chemins avec la lettre;
+    while (le nombre d etats incremente)
+
+    on cherche et marque les etats finaux;
+  \end{lstlisting}
+
+  
+  \item \lstinline|Automaton *create_minimal_dfa(Automaton *dfa)| : \\
+  Fonction que minimise l'automat déterministe, en donnant l'automate minimal unique.
+
+  \begin{lstlisting}
+    on cherche les etats acceptants;
+    on cherche les non-acceptants;
+
+    do
+    | for (chaque groupe)
+    | | for (chaque etat dans le groupe)
+    | | | for (chaque lettre dans l etat)
+    | | | | on cherche si les etats ont differents debuts et departs;
+    | if (il y a des etats differents)
+    | | on cree un nouvel set;
+    | | if (set n existe pas)
+    | | | on l ajoute au dfa minimal;
+    while (nombre de sets incremente)
+
+    for (chaque etat du dfa minimal)
+    | on marque les etats de depart ou finaux;
+
+    on cree tableau des transitions;
+    for (chaque transition du dfa minimal)
+    | on ajoute au tableau;
+
+    if (transition est nouvelle)
+    | on ajoute au dfa minimal;
+
+    for (chaque etat du dfa minimal)
+    | if (etat deconecte)
+    | | on marque comme supprime;
+  \end{lstlisting}
+
+  
+  \item \lstinline|void export_automate_code(Automaton *dfa, const char *expression,|\\
+  \lstinline|const char *filename)| : \\
+  Fonction pour exporter l'automate minimal. Elle écrit un code C associé a cet automate, qui peut être compilé séparément pour analyser des mots. La fonction écrit un tableau de transitions et des boucles pour lire le mot lettre par lettre et vérifier s'il appartient ou pas a le langage décrit par l'expression régulière.
+  
+\end{itemize}
+
 \subsection{f\_aux\_automata}
+\label{sec:auxs_auto}
+Tous les fonctions auxiliaires dans les algorithmes des automates sont dans ce fichier. Il y a 4 types.
+
+\subsubsection{Fonctions pour initialiser des objets}
+Toutes ces fonctions initialisent des objets, c'est-à-dire, elles allouent la mémoire pour les attributes dedans et donne des valeurs par défaut, car on peut pas garantir que C le fait. Particulièrement il faut être attentif avec les pointeurs et tableaux, où il faut s'assurer que les pointeurs son nulles.
+
+\begin{itemize}
+  \item \lstinline|void initialize_nfa(Automaton *nfa, SyntaxTree *tree)| : \\ 
+  Cette fonction aussi compte la quantité des états et transitions avant l'algorithme, donc le tableau et déjà alloué avant commencer.
+  \item \lstinline|void initialize_dfa(Automaton *dfa, Automaton *nfa)|
+  \item \lstinline|void initialize_state(AState *state, int index, int is_start, int is_final)|
+  \item \lstinline|void initialize_dfa_state(AState *state, int index, int is_start, int is_final,|\\
+  \lstinline|NodeSet *node_set)|
+  \item \lstinline|void initialize_transition(ATransition *transition, AState *from, AState *to,|\\
+  \lstinline|char symbol)|
+\end{itemize}
+
+\subsubsection{Fonctions pour modifier les automates}
+Ces fonctions modifient les automates. On les utilisé pour ajouter des données aux automates (états et transitions), ce que l'on fait en modifient les compteurs et en réallouent la mémoire pour chaque tableau. 
+\begin{itemize}
+  \item \lstinline|void add_transition_to_state(ATransition *transition, AState *state_from,|\\
+  \lstinline|AState *state_to)|
+  \item \lstinline|void add_transition_to_nfa(Automaton *automat, ATransition *transition, int counter)|
+  \item \lstinline|void add_transition_to_dfa(Automaton *dfa, ATransition *transition)|
+  \item \lstinline|void add_state_to_nfa(Automaton *automat, AState* state, int counter)|
+  \item \lstinline|void add_state_to_dfa(Automaton *nfa, AState *state)|
+  \item \lstinline|void merge_states_automaton(Automaton *automat)| : \\
+  Cette fonction est utilisé pour combiner des états dans la concatenation. Normalement on combine deux DFA avec une état commun pour les deux, mais dans notre algorithme on utilise un état intermédiaire avec une transition vide (marqué par un arrobas). Cette fonction prendre l'état et le supprime de l'automate, en réorientent les transitions vers les état correctes.
+\end{itemize}
+
+\subsubsection{Fonctions pour faire des actions}
+\begin{itemize}
+  \item \lstinline|void follow_path_from_single_state(NodeSet *node_set, AState *initial_state,|\\ 
+  \lstinline|char value)| : \\
+  Fonction qui prend un état de départ dans le NFA, un caractère et cherche tous les états accesibles. Chaque état atteint est ajouté dans un group des états. Les transitions vides sont considérés aussi, mais seulement s'il sont pas la première transition. Un pseudo code associé est donné ci-dessous.
+
+  \begin{lstlisting}
+    for (tous les transitions dans un etat)
+    | if (transition vide dans un groupe non vide OU 
+    |     transition du caractere cherche) 
+    | | if (etat non ajoute dans le groupe) 
+    | | | ajouter etat;
+    | | | rappeler la fonction avec le nouvel etat;
+  \end{lstlisting}
+
+  \item \lstinline|void follow_path_from_group_state(Automaton *dfa, Automaton *nfa,|\\
+  \lstinline|AState *initial_state, char value)| : \\
+  Fonction qui prend un état de départ dans le DFA (donc un set d'etats) et cherche tous les chemins possibles associés a un caractère donné. Elle appelle la fonction \texttt{follow\_path\_} \texttt{from\_single\_state} recursivement.
+
+  \begin{lstlisting}
+    for (tous les etats NFA dans un etat DFA)
+    | follow_path_from_single_state;
+    |
+    | if (group d etats est vide)
+    | | return;;
+    | | 
+    | | if (groupe existe OU groupe est contenu dans un autre) 
+    | | | ajouter une transition;
+    | | | return;
+    | |
+    | | on cree un nouvel group;
+    | | on ajoute les transitions;
+    | | return;
+  \end{lstlisting}
+
+  \item \lstinline|void check_final_states(Automaton *dfa, Automaton *nfa)| : \\
+  Vérifie quels états du NFA sont finaux et les marque comme finaux dans le DFA.
+  \item \lstinline|void remove_states_from_set(NodeSet *original_set, NodeSet *new_set)| : \\
+  Vérifie si les états dans \texttt{new\_set} sont dans \texttt{original\_set}. Si ça ce le cas, elle supprime l'état dans le set original et réalloue la mémoire pour le tableau réduit.
+  \item \lstinline|int is_state_in_node_set(int index, NodeSet *node_set)| : \\
+  Vérifie si l'état avec indice \texttt{index} est contenu dans le set \texttt{node\_set}. Elle retour 1 si ce le cas et 0 si non.
+  \item \lstinline|int compare_node_sets(NodeSet *set1, NodeSet *set2)| : \\
+  Vérifie si le set1 et le set2 sont égaux. Elle retour 1 si ce le cas, 0 si non.
+  \item \lstinline|int contained_node_set(NodeSet *set1, NodeSet *set2)| : \\
+  Vérifie si le set2 est contenu dans le set 1. Elle retour 1 si le set est contenu et 0 si non.
+\end{itemize}
+
+\subsubsection{Fonctions pour exporter les données}
+\begin{itemize}
+  \item \lstinline|void export_automaton_to_graphviz(const char *filename, Automaton *automat)| : \\
+  Cette fonction prendre l'automat (DFA ou NFA) et l'exporte dans un format \texttt{.dot} qui peut être utilisé pour \textit{graphviz} pour dessiner le graphe.
+\end{itemize}
+
+
 \subsection{f\_aux\_tree}
+\label{sec:auxs_tree}
+\subsubsection{Fonctions pour initialiser des objets}
+\begin{itemize}
+  \item \lstinline|initialize_leaf(TreeNode *leaf, char value, int index)| : \\
+  Fonction qui initialise les feuilles de l'arbre. Elle marque les pointeurs comme nulles pour sécuriser la mémoire.
+\end{itemize}
+
+
+\subsubsection{Fonctions pour faire des actions}
+\begin{itemize}
+  \item \lstinline|int verify_syntax_tree(char *expression)| : \\
+  Fonction qui lit l'expression et vérifie si elle est correcte. Elle vérifie si tous les parenthèses sont fermés, si les opérateurs comme la disjonction sont appliqués correctement. La fonction aussi compte le nombre de feuilles que l'arbre aura, en ajoutant aussi les concatenations implicites.
+  \item \lstinline|find_unique_alphanumerics(const char* input, char* output, int* out_count)| : \\
+  Implemente un algorithme pour identifier les caractères utilisés dans l'expression. Pour chaque lettre de l'expression vérifie si le caractère a été lu et l'ajoute à un tableau. Elle retourne un \texttt{string} (\lstinline|const char*|) avec tous les caractères alphanumériques uniques.
+\end{itemize}
+
+
+\subsubsection{Fonctions pour exporter les données}
+Les fonctions suivantes exportent l'arbre dans le format \texttt{.dot}. Comme l'arbre est définie d'une manière récursive, on define deux fonction, une qui exporte les feuilles et autre qui exporte l'arbre, qui fait une appel récursif à la fonction du feuille.
+\begin{itemize}
+  \item \lstinline|export_node(FILE *f, TreeNode *node)|
+  \item \lstinline|export_tree_to_graphviz(const char *filename, SyntaxTree *tree)|
+\end{itemize}
 
 \end{document}

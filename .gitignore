@@ -1,4 +1,3 @@
 build/*
-files/*.png
-files/*.dot
+out/*
 .DS_Store

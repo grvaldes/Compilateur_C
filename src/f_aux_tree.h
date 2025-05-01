@@ -7,7 +7,6 @@
 int verify_syntax_tree(char *expression);
 
 void initialize_leaf(TreeNode *leaf, char value, int index);
-void display_tree(SyntaxTree *tree);
 
 void export_node(FILE *f, TreeNode *node);
 void export_tree_to_graphviz(const char *filename, SyntaxTree *tree);

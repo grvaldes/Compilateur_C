@@ -12,7 +12,7 @@
 void initialize_state(AState *state, int index, int is_start, int is_final);
 void initialize_transition(ATransition *transition, AState *from, AState *to, char symbol);
 void add_transition_to_state(ATransition *transition, AState *state_from, AState *state_to);
-void merge_nodes_automaton(Automaton *automat);
+void merge_states_automaton(Automaton *automat);
 void export_automaton_to_graphviz(const char *filename, Automaton *automat);
 
 
@@ -31,7 +31,7 @@ void initialize_dfa_state(AState *state, int index, int is_start, int is_final, 
 void add_transition_to_dfa(Automaton *dfa, ATransition *transition);
 void add_state_to_dfa(Automaton *nfa, AState *state);
 
-int state_in_node_set(int index, NodeSet *node_set);
+int is_state_in_node_set(int index, NodeSet *node_set);
 int compare_node_sets(NodeSet *set1, NodeSet *set2);
 int contained_node_set(NodeSet *set1, NodeSet *set2);
 void check_final_states(Automaton *dfa, Automaton *nfa);

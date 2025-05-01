@@ -1,10 +1,10 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -O2
+CFLAGS = -O2 -g
 
 # Directories
-SRC_DIR = src
-BUILD_DIR = build
+SRC_DIR = .
+BUILD_DIR = ../build
 
 # Source and object files
 SRCS := $(wildcard $(SRC_DIR)/*.c)
